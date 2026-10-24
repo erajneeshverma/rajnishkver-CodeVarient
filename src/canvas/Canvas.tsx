@@ -24,7 +24,7 @@ import {
   type KeyboardCoordinateGetter,
 } from '@dnd-kit/core'
 import { GripVertical } from 'lucide-react'
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { cx } from '../lib/util'
 
 /** What is being dragged. */
@@ -76,9 +76,6 @@ const jumpBetweenZones: KeyboardCoordinateGetter = (event, { context }) => {
   return { x: next.rect.left + next.rect.width / 2 - w / 2, y: next.rect.top + next.rect.height / 2 - h / 2 }
 }
 
-const CanvasState = createContext<{ dragging: CardData | null }>({ dragging: null })
-export const useCanvas = () => useContext(CanvasState)
-
 export function CanvasProvider({ children }: { children: ReactNode }) {
   const [dragging, setDragging] = useState<CardData | null>(null)
   const sensors = useSensors(
@@ -106,8 +103,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <CanvasState.Provider value={{ dragging }}>
-      <DndContext
+    <DndContext
         sensors={sensors}
         collisionDetection={collision}
         // Zones can move while a card is held (page scroll, toasts, sticky panels), so keep their positions fresh.
@@ -126,8 +122,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
         <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
           {dragging ? <div className="rotate-2 scale-105 cursor-grabbing shadow-2xl shadow-black/40">{dragging.preview()}</div> : null}
         </DragOverlay>
-      </DndContext>
-    </CanvasState.Provider>
+    </DndContext>
   )
 }
 

@@ -1,11 +1,12 @@
-import { ArrowLeft, ArrowRight, Check, FolderGit2, Loader2, Plus, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, FolderGit2, Loader2, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CausePicker, InterestPicker, RelevancePicker } from '../components/ui'
-import { appConfig, paths, salvageKinds } from '../config'
+import { appConfig, causes, paths, salvageKinds } from '../config'
 import { advise } from '../engine/advisor'
-import { importRepo } from '../lib/github'
+import { importRepo, parseRepo } from '../lib/github'
 import { cx, dateInputToISO, localDate, todayISO, uid } from '../lib/util'
+import { ActionZone, DataCard } from '../canvas/Canvas'
 import { useGraveyard, useProject } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
 import { useTitle } from '../lib/useTitle'
@@ -161,9 +162,9 @@ function BuryForm() {
       <form
         className="card space-y-5 p-5 sm:p-7"
         onSubmit={(e) => {
+          // Enter moves through the steps; laying it to rest is a drag (Canvas Protocol).
           e.preventDefault()
           if (step < 2) next()
-          else submit()
         }}
       >
         {step === 0 && <TombstoneStep key={formKey} d={d} set={set} setD={setD} errors={touched ? errors : {}} />}
@@ -218,19 +219,6 @@ function BuryForm() {
             <button type="button" className="btn-ghost" onClick={() => setStep((s) => s - 1)}>
               <ArrowLeft className="size-4" /> Back
             </button>
-          ) : !editing && savedDraft?.name ? (
-            <button
-              type="button"
-              className="btn text-muted hover:text-ink"
-              onClick={() => {
-                clearDraft()
-                setD(blank())
-                setTouched(false)
-                setFormKey((k) => k + 1)
-              }}
-            >
-              Clear draft
-            </button>
           ) : (
             <span />
           )}
@@ -239,12 +227,82 @@ function BuryForm() {
               Next <ArrowRight className="size-4" />
             </button>
           ) : (
-            <button type="submit" className="btn-primary">
-              <Check className="size-4" /> {editing ? 'Save changes' : 'Lay it to rest'}
-            </button>
+            <span className="text-xs text-muted">Drag the tombstone below to finish</span>
           )}
         </div>
       </form>
+
+      {step === 2 && (
+        <section aria-label="Finish" className="card mt-4 p-5 sm:p-6">
+          <h2 className="font-display text-lg font-semibold">{editing ? 'Save the tombstone' : 'Lay it to rest'}</h2>
+          <p className="mt-1 text-sm text-muted">Drag the tombstone into a zone.</p>
+          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[13rem_1fr]">
+            <div className="flex justify-center">
+              <DataCard id="draft" payload={{ kind: 'draft' }} label={`Tombstone for ${d.name || 'your project'}`} className="w-full max-w-[13rem]" hint={false}>
+                <DraftTombstone d={d} />
+              </DataCard>
+            </div>
+            <div className="grid gap-2.5">
+              <ActionZone
+                id="grave"
+                label={editing ? 'Update the tombstone' : 'The grave: lay it to rest'}
+                icon={editing ? '✏️' : '🪦'}
+                hint={editing ? 'Saves your changes' : 'Buries it and asks the Revival Advisor'}
+                className="py-6"
+                accepts={(p) => p.kind === 'draft'}
+                onDrop={submit}
+              />
+              {!editing && (
+                <ActionZone
+                  id="discard"
+                  label="Discard draft"
+                  icon="🗑️"
+                  tone="danger"
+                  hint="Start over with an empty form"
+                  accepts={(p) => p.kind === 'draft'}
+                  onDrop={() => {
+                    clearDraft()
+                    setD(blank())
+                    setTouched(false)
+                    setFormKey((k) => k + 1)
+                    setStep(0)
+                    toast('🗑️ Draft discarded.')
+                  }}
+                />
+              )}
+            </div>
+          </div>
+          {touched && [0, 1].some((i) => !stepValid(i)) && (
+            <p role="alert" className="mt-3 text-xs text-rose-500">
+              Some earlier answers need fixing first.
+            </p>
+          )}
+        </section>
+      )}
+    </div>
+  )
+}
+
+/** Live preview of the tombstone being buried; this is the card you drag. */
+function DraftTombstone({ d }: { d: ProjectDraft }) {
+  const cause = causes.find((c) => c.id === d.cause)
+  return (
+    <div className="tombstone w-full border border-line bg-stone px-4 pb-4 pt-7 text-center">
+      <p className="font-display text-[10px] tracking-[0.3em] text-muted">HERE LIES</p>
+      <p className="mt-1 truncate font-display text-lg font-semibold">{d.name || 'Untitled'}</p>
+      <p className="text-xs text-muted">
+        {d.startedAt.slice(0, 4)}
+        {d.lastTouchedAt.slice(0, 4) !== d.startedAt.slice(0, 4) && ` – ${d.lastTouchedAt.slice(0, 4)}`}
+      </p>
+      {cause && (
+        <p className="mt-1 text-xs text-muted">
+          <span aria-hidden>{cause.emoji}</span> {cause.label}
+        </p>
+      )}
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full rounded-full bg-lantern" style={{ width: `${d.completion}%` }} />
+      </div>
+      <p className="mt-1.5 text-xs text-muted">{d.completion}% done</p>
     </div>
   )
 }
@@ -265,19 +323,23 @@ function TombstoneStep({
   const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [tag, setTag] = useState('')
 
-  const runImport = async () => {
+  const [imported, setImported] = useState(d.repoUrl ?? '')
+
+  const runImport = async (value = repo) => {
+    if (!value.trim() || loading) return
+    setImported(value.trim())
     setLoading(true)
     setImportMsg(null)
     try {
-      const info = await importRepo(repo)
+      const info = await importRepo(value)
       setD((prev) => ({
         ...prev,
         name: prev.name || info.name,
         description: prev.description || info.description || info.readmeExcerpt,
         goal: prev.goal || (info.description ? info.readmeExcerpt : ''),
         stack: [...new Set([...prev.stack, ...info.stack])],
-        startedAt: info.createdAt.slice(0, 10),
-        lastTouchedAt: info.lastCommitAt.slice(0, 10),
+        startedAt: localDate(info.createdAt),
+        lastTouchedAt: localDate(info.lastCommitAt),
         repoUrl: info.url,
       }))
       setImportMsg({ ok: true, text: `Imported ${info.name}: stack, dates and README filled in. Check them below.` })
@@ -287,6 +349,14 @@ function TombstoneStep({
       setLoading(false)
     }
   }
+
+  // Import starts by itself shortly after a valid repo URL is typed or pasted.
+  useEffect(() => {
+    const value = repo.trim()
+    if (!parseRepo(value) || value === imported) return
+    const t = setTimeout(() => runImport(value), 700)
+    return () => clearTimeout(t)
+  })
 
   const addTag = () => {
     const t = tag.trim().replace(/,$/, '')
@@ -300,23 +370,21 @@ function TombstoneStep({
         <label className="label flex items-center gap-2" htmlFor="repo">
           <FolderGit2 className="size-4" /> Import from GitHub <span className="font-normal text-muted">(optional)</span>
         </label>
-        <div className="flex gap-2">
+        <div className="relative">
           <input
             id="repo"
-            className="field"
-            placeholder="github.com/owner/repo"
+            className="field pr-9"
+            placeholder="Paste github.com/owner/repo and it imports itself"
             value={repo}
             onChange={(e) => setRepo(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
-                if (repo.trim()) runImport()
+                runImport()
               }
             }}
           />
-          <button type="button" className="btn-ghost shrink-0" disabled={!repo.trim() || loading} onClick={runImport}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : 'Import'}
-          </button>
+          {loading && <Loader2 aria-label="Importing" className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted" />}
         </div>
         {importMsg && (
           <p role="status" className={cx('mt-2 text-xs', importMsg.ok ? 'text-moss' : 'text-rose-500')}>
@@ -423,9 +491,11 @@ function Field({ label, error, optional, children }: { label: string; error?: st
   )
 }
 
+/** Salvage parts for a new burial: type one, drag its card into the list; drag a part to the bin to drop it. */
 export function SalvageInput({ items, onChange }: { items: ProjectDraft['salvage']; onChange: (v: ProjectDraft['salvage']) => void }) {
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<SalvageKind>('component')
+  const emoji = (k: SalvageKind) => salvageKinds.find((x) => x.id === k)?.emoji
   const add = () => {
     if (!title.trim()) return
     onChange([...items, { id: uid(), kind, title: title.trim() }])
@@ -450,28 +520,52 @@ export function SalvageInput({ items, onChange }: { items: ProjectDraft['salvage
           placeholder="e.g. Auth module, a lesson, an icon set"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              add()
-            }
-          }}
         />
-        <button type="button" className="btn-ghost shrink-0" onClick={add} disabled={!title.trim()}>
-          <Plus className="size-4" /> Add
-        </button>
       </div>
-      {items.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-2">
-          {items.map((it) => (
-            <li key={it.id} className="inline-flex items-center gap-1.5 rounded-md bg-surface-2 px-2.5 py-1 text-xs">
-              {salvageKinds.find((k) => k.id === it.kind)?.emoji} {it.title}
-              <button type="button" aria-label={`Remove ${it.title}`} onClick={() => onChange(items.filter((x) => x.id !== it.id))}>
-                <X className="size-3" />
-              </button>
-            </li>
-          ))}
-        </ul>
+      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+        <ActionZone
+          bare
+          id="draft-salvage"
+          label="the salvage list"
+          accepts={(p) => p.kind === 'new-salvage' && p.id === 'draft'}
+          onDrop={add}
+          className="min-h-14 p-2"
+        >
+          {items.length ? (
+            <ul className="flex flex-wrap gap-2">
+              {items.map((it) => (
+                <li key={it.id}>
+                  <DataCard id={`draft-salvage-${it.id}`} payload={{ kind: 'salvage', id: 'draft', itemId: it.id }} label={`Part ${it.title}`} hint={false}>
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-2 px-2.5 py-1 text-xs">
+                      {emoji(it.kind)} {it.title}
+                    </span>
+                  </DataCard>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="p-2 text-center text-xs text-muted">Salvage list: drop part cards here</p>
+          )}
+        </ActionZone>
+        {items.length > 0 && (
+          <ActionZone
+            id="draft-salvage-bin"
+            label="Bin"
+            icon="🗑️"
+            tone="danger"
+            className="grid place-items-center py-2"
+            accepts={(p) => p.kind === 'salvage' && p.id === 'draft'}
+            onDrop={(p) => p.kind === 'salvage' && onChange(items.filter((x) => x.id !== p.itemId))}
+          />
+        )}
+      </div>
+      {title.trim() && (
+        <DataCard id="draft-new-salvage" payload={{ kind: 'new-salvage', id: 'draft' }} label={`New part ${title.trim()}`} className="mt-2">
+          <div className="flex items-center gap-2 rounded-lg border border-lantern/60 bg-surface p-2.5 pr-8 text-sm shadow-sm">
+            <span aria-hidden>{emoji(kind)}</span> <span className="truncate">{title.trim()}</span>
+          </div>
+          <p className="mt-1 text-center text-xs text-muted">↑ Drag this card into the salvage list</p>
+        </DataCard>
       )}
     </div>
   )

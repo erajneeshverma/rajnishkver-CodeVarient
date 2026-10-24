@@ -29,7 +29,7 @@ export function Layout() {
         e.preventDefault()
         if (pathname !== '/') navigate('/')
         setTimeout(() => document.getElementById('search')?.focus(), 50)
-      } else if (e.key === 'b' && pathname !== '/bury') {
+      } else if (e.key === 'b' && pathname !== '/bury' && !pathname.endsWith('/edit')) {
         navigate('/bury')
       }
     }

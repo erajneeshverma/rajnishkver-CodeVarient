@@ -8,7 +8,6 @@ import type { EventType, PathId, Project, Relevance, SalvageKind, StoredStatus }
 import { uid } from './util'
 
 const eventTypes: EventType[] = ['started', 'milestone', 'abandoned', 'buried', 'imported', 'assessed', 'revisited', 'decided', 'revived', 'archived', 'note']
-const statuses: StoredStatus[] = ['resting', 'revived', 'rip']
 const relevances: Relevance[] = ['yes', 'partly', 'no']
 
 type Raw = Record<string, unknown>
@@ -58,7 +57,8 @@ export function normalizeProject(raw: unknown): Project | null {
             : [],
         )
       : [],
-    status: oneOf(raw.status, statuses, 'resting'),
+    // Status must agree with the decision, or Insights would count it wrongly.
+    status: decisionPath ? (paths.find((p) => p.id === decisionPath)!.resultStatus as StoredStatus) : 'resting',
     decision:
       d && decisionPath
         ? {

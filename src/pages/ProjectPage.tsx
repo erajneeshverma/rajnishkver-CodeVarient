@@ -234,7 +234,7 @@ export function ProjectPage() {
       </div>
 
       <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title={`Exhume ${project.name}?`}>
-        <p className="text-sm text-muted">This removes the project and its whole history from your graveyard. It can’t be undone.</p>
+        <p className="text-sm text-muted">This removes the project and its whole history from your graveyard. You’ll have a few seconds to undo it.</p>
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" className="btn-ghost" onClick={() => setConfirmDelete(false)}>
             Keep it
@@ -250,7 +250,7 @@ export function ProjectPage() {
               toast(`${snapshot.name} was exhumed.`, { label: 'Undo', run: () => restore(snapshot, index) })
             }}
           >
-            Delete forever
+            Delete
           </button>
         </div>
       </Modal>

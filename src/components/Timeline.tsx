@@ -1,6 +1,6 @@
 import { Archive, Eye, Flag, FolderGit2, Milestone, Pause, Play, Shovel, Signpost, StickyNote, Trash2, Zap } from 'lucide-react'
 import { useState, type ComponentType } from 'react'
-import { cx, formatDate, todayISO } from '../lib/util'
+import { cx, dateInputToISO, formatDate, todayISO } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
 import type { EventType, Project } from '../types'
@@ -28,8 +28,8 @@ export function Timeline({ project }: { project: Project }) {
 
   const add = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!text.trim()) return
-    logEvent(project.id, type, text.trim(), new Date(date + 'T12:00:00').toISOString())
+    if (!text.trim() || !date || date > todayISO()) return
+    logEvent(project.id, type, text.trim(), dateInputToISO(date))
     toast(type === 'milestone' ? 'Milestone added to the timeline.' : 'Note added to the timeline.')
     setText('')
   }
@@ -73,9 +73,9 @@ export function Timeline({ project }: { project: Project }) {
           <option value="milestone">Milestone</option>
           <option value="note">Note</option>
         </select>
-        <input aria-label="Entry date" type="date" className="field sm:w-40" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} />
+        <input aria-label="Entry date" type="date" required className="field sm:w-40" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} />
         <input aria-label="What happened" className="field" placeholder="What happened?" value={text} onChange={(e) => setText(e.target.value)} />
-        <button type="submit" className="btn-ghost shrink-0" disabled={!text.trim()}>
+        <button type="submit" className="btn-ghost shrink-0" disabled={!text.trim() || !date}>
           <Flag className="size-4" /> Add
         </button>
       </form>

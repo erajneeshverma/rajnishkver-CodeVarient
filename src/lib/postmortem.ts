@@ -2,6 +2,7 @@
 import { appConfig, causes, paths, relevanceOptions, salvageKinds } from '../config'
 import { advise } from '../engine/advisor'
 import type { Project } from '../types'
+import { downloadFile } from './download'
 import { effectiveStatus, formatDate, statusConfig } from './util'
 
 const section = (title: string, body: string) => (body.trim() ? `## ${title}\n\n${body.trim()}\n` : '')
@@ -77,10 +78,6 @@ export function toMarkdown(p: Project, now = new Date()): string {
 }
 
 export function downloadMarkdown(p: Project) {
-  const blob = new Blob([toMarkdown(p)], { type: 'text/markdown' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project'}-postmortem.md`
-  a.click()
-  URL.revokeObjectURL(a.href)
+  const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project'
+  downloadFile(`${slug}-postmortem.md`, toMarkdown(p), 'text/markdown')
 }

@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { downloadFile } from '../lib/download'
 
 /** Last line of defence: if a screen crashes, offer a way out instead of a blank page. */
 export class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -15,11 +16,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
   render() {
     if (!this.state.error) return this.props.children
     const backup = () => {
-      const data = localStorage.getItem('project-graveyard') ?? '{}'
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }))
-      a.download = 'project-graveyard-backup.json'
-      a.click()
+      downloadFile('project-graveyard-backup.json', localStorage.getItem('project-graveyard') ?? '{}', 'application/json')
     }
     return (
       <div className="mx-auto max-w-lg px-4 py-24 text-center">

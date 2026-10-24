@@ -26,3 +26,10 @@ describe('parseExport', () => {
     expect(() => parseExport('{"projects":[{"nope":true}]}')).toThrow(/could be read/)
   })
 })
+
+describe('status consistency', () => {
+  it('derives status from the decision', () => {
+    const out = parseExport(JSON.stringify({ projects: [{ name: 'A', status: 'revived' }, { name: 'B', status: 'resting', decision: { path: 'archive' } }] }))
+    expect(out.map((p) => p.status)).toEqual(['resting', 'rip'])
+  })
+})

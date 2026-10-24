@@ -3,6 +3,8 @@ import { useTitle } from '../lib/useTitle'
 import { useRef, useState } from 'react'
 import { Modal, Section } from '../components/ui'
 import { causes, paths, rules, type Condition } from '../config'
+import { downloadFile } from '../lib/download'
+import { localDate } from '../lib/util'
 import { parseExport } from '../lib/validate'
 import { useGraveyard } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
@@ -83,14 +85,8 @@ function DataTools() {
   const [msg, setMsg] = useState('')
   const [confirm, setConfirm] = useState<'reset' | 'clear' | null>(null)
 
-  const exportJson = () => {
-    const blob = new Blob([JSON.stringify({ version: 1, projects }, null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `project-graveyard-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
+  const exportJson = () =>
+    downloadFile(`project-graveyard-${localDate()}.json`, JSON.stringify({ version: 1, projects }, null, 2), 'application/json')
 
   const importJson = async (file: File) => {
     try {

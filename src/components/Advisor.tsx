@@ -75,7 +75,7 @@ function PathCard({
           <span className="flex flex-wrap items-center gap-2">
             <span className="font-medium">{cfg.label}</span>
             {recommended && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-lantern px-2 py-0.5 text-[11px] font-semibold text-[#1a1306]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-lantern px-2 py-0.5 text-[11px] font-semibold text-on-lantern">
                 <Sparkles className="size-3" /> Recommended
               </span>
             )}
@@ -117,7 +117,7 @@ function Reasons({ title, items, positive }: { title: string; items: PathAdvice[
   if (!items.length) return null
   return (
     <div>
-      <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h4>
+      <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h3>
       <ul className="space-y-1.5">
         {items.map((r) => (
           <li key={r.text} className="flex items-start gap-2">

@@ -65,6 +65,7 @@ The in-app **How advice works** page renders every rule from the config.
 
 Causes, statuses, revival paths, next-step templates and every advisor rule live in
 [`src/config/index.ts`](src/config/index.ts). Changing the app's behaviour means editing data, not screens.
+See [`docs/CONFIG.md`](docs/CONFIG.md) for step-by-step recipes.
 
 ## Tech
 

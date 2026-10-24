@@ -6,6 +6,7 @@ import { useGraveyard } from '../store/useGraveyard'
 
 const nav = [
   { to: '/', label: 'Graveyard', end: true },
+  { to: '/insights', label: 'Insights' },
   { to: '/salvage', label: 'Salvage Yard' },
   { to: '/advisor', label: 'How advice works' },
 ]

@@ -19,6 +19,7 @@ Built for **Code Variant · Build 01 · Problem Statement 05**.
 | **Decide** | Revive with three next steps, or archive with an epitaph of lessons learned. Overriding the advisor is allowed and logged. |
 | **Project Timeline** | Started → milestones → abandoned → revisited → decided, plus your own entries. |
 | **Haunt Me Later** | Set a revisit reminder. Due projects switch to *Haunting* and show on the archive. |
+| **Graveyard Insights** | Why your projects die, how far they get, what you decide, which stacks pile up, plain-language findings and an epitaph wall of lessons. |
 | **Salvage Yard** | Reusable parts (code, lessons, assets) from every project, all in one place. |
 
 ## How the Revival Advisor works
@@ -45,7 +46,7 @@ src/
   store/      Zustand store
   lib/        GitHub import, seed data, helpers
   components/ UI pieces (Tombstone, Advisor, Timeline…)
-  pages/      Archive, Bury, Project, Salvage Yard, How advice works
+  pages/      Archive, Bury, Project, Insights, Salvage Yard, How advice works
 ```
 
 ## Run it

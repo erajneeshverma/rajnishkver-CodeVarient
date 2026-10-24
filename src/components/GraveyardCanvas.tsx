@@ -321,7 +321,7 @@ function DragHint({ containerRef, enabled }: { containerRef: React.RefObject<HTM
           className="pointer-events-none absolute left-0 top-0 z-20 -translate-x-1/2 -translate-y-1/2"
           initial={{ x: path.from.x, y: path.from.y, opacity: 0 }}
           animate={{ x: [path.from.x, path.from.x, path.to.x, path.to.x], y: [path.from.y, path.from.y, path.to.y, path.to.y], opacity: [0, 0.9, 0.9, 0] }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.1 } }}
           transition={{ duration: 2.6, times: [0, 0.15, 0.8, 1], repeat: 2, repeatDelay: 0.4, ease: 'easeInOut' }}
         >
           <HintGhost />

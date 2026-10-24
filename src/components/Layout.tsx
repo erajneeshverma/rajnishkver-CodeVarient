@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { cx } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
+import { Toaster } from './Toaster'
 
 const nav = [
   { to: '/', label: 'Graveyard', end: true },
@@ -87,6 +88,7 @@ export function Layout() {
       <footer className="border-t border-line py-6 text-center text-xs text-muted">
         Unfinished isn’t failed. · Built for Code Variant Build 01 · Everything stays in your browser.
       </footer>
+      <Toaster />
     </div>
   )
 }

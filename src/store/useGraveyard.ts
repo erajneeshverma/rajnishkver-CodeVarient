@@ -15,6 +15,7 @@ interface GraveyardState {
   bury: (draft: ProjectDraft) => string
   edit: (id: string, draft: ProjectDraft) => void
   remove: (id: string) => void
+  restore: (project: Project, index: number) => void
   assess: (id: string, interest: number, relevance: Relevance) => void
   decide: (id: string, d: { path: PathId; suggested: PathId; nextSteps: string[]; epitaph?: string }) => void
   reopen: (id: string) => void
@@ -80,6 +81,13 @@ export const useGraveyard = create<GraveyardState>()(
           }),
 
         remove: (id) => set((s) => ({ projects: s.projects.filter((p) => p.id !== id) })),
+
+        restore: (project, index) =>
+          set((s) => {
+            const projects = [...s.projects]
+            projects.splice(Math.min(index, projects.length), 0, project)
+            return { projects }
+          }),
 
         assess: (id, interest, relevance) =>
           update(id, (p) => ({

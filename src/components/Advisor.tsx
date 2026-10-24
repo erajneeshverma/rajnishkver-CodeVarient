@@ -5,6 +5,7 @@ import { appConfig, paths } from '../config'
 import { advise, type PathAdvice } from '../engine/advisor'
 import { cx } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
+import { toast } from '../store/useToast'
 import type { PathId, Project } from '../types'
 import { Modal } from './ui'
 
@@ -146,6 +147,7 @@ function DecisionModal({ project, path, suggested, onClose }: { project: Project
       epitaph: isArchive ? epitaph.trim() : undefined,
     })
     onClose()
+    toast(isArchive ? `🪦 ${project.name} rests in peace.` : `⚡ ${project.name} has been revived: ${cfg.label}.`)
   }
 
   return (

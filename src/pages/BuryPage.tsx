@@ -7,6 +7,7 @@ import { advise } from '../engine/advisor'
 import { importRepo } from '../lib/github'
 import { cx, todayISO, uid } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
+import { toast } from '../store/useToast'
 import type { Project, ProjectDraft, SalvageKind } from '../types'
 
 const steps = [
@@ -96,9 +97,11 @@ export function BuryPage() {
     const final = { ...d, startedAt: toISO(d.startedAt), lastTouchedAt: toISO(d.lastTouchedAt), repoUrl: d.repoUrl || undefined }
     if (existing) {
       edit(existing.id, final)
+      toast('Tombstone updated.')
       navigate(`/project/${existing.id}`)
     } else {
       const newId = bury(final)
+      toast(`🪦 ${final.name} has been laid to rest. Here’s what the advisor thinks.`)
       navigate(`/project/${newId}#advisor`)
     }
   }

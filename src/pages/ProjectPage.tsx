@@ -7,6 +7,7 @@ import { Empty, InterestPicker, Modal, Progress, RelevancePicker, Section, Statu
 import { causes, hauntOptions, paths, relevanceOptions, salvageKinds } from '../config'
 import { effectiveStatus, formatDate, relativeTime } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
+import { toast } from '../store/useToast'
 import type { Relevance, SalvageKind } from '../types'
 import { NotFound } from './NotFound'
 
@@ -15,7 +16,7 @@ export function ProjectPage() {
   const project = useProject(id)
   const { hash } = useLocation()
   const navigate = useNavigate()
-  const { remove, hauntIn, clearHaunt, reopen } = useGraveyard()
+  const { remove, restore, hauntIn, clearHaunt, reopen } = useGraveyard()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [assessing, setAssessing] = useState(false)
   const [hauntOpen, setHauntOpen] = useState(false)
@@ -71,7 +72,10 @@ export function ProjectPage() {
         <div className="flex flex-wrap gap-2">
           {project.status === 'resting' &&
             (project.hauntAt ? (
-              <button type="button" className="btn-ghost" onClick={() => clearHaunt(project.id)}>
+              <button type="button" className="btn-ghost" onClick={() => {
+                  clearHaunt(project.id)
+                  toast('Reminder cleared. It will rest quietly.')
+                }}>
                 <BellOff className="size-4" /> Stop haunting
               </button>
             ) : (
@@ -110,7 +114,10 @@ export function ProjectPage() {
                     </p>
                   )}
                 </div>
-                <button type="button" className="btn-ghost" onClick={() => reopen(project.id)}>
+                <button type="button" className="btn-ghost" onClick={() => {
+                    reopen(project.id)
+                    toast(`${project.name} is resting again. Take another look below.`)
+                  }}>
                   <RotateCcw className="size-4" /> Reconsider
                 </button>
               </div>
@@ -210,8 +217,11 @@ export function ProjectPage() {
             type="button"
             className="btn-danger"
             onClick={() => {
+              const index = useGraveyard.getState().projects.findIndex((p) => p.id === project.id)
+              const snapshot = project
               remove(project.id)
               navigate('/')
+              toast(`${snapshot.name} was exhumed.`, { label: 'Undo', run: () => restore(snapshot, index) })
             }}
           >
             Delete forever
@@ -232,6 +242,7 @@ export function ProjectPage() {
               onClick={() => {
                 hauntIn(project.id, d)
                 setHauntOpen(false)
+                toast(`👻 ${project.name} will haunt you in ${d} days.`)
               }}
             >
               {d} days
@@ -287,6 +298,7 @@ function AssessModal({ id, interest: i0, relevance: r0, onClose }: { id: string;
           onClick={() => {
             assess(id, interest, relevance)
             onClose()
+            toast('Assessment updated. The advice below has been re-ranked.')
           }}
         >
           Update advice
@@ -334,6 +346,7 @@ function SalvagePanel({ projectId }: { projectId: string }) {
           e.preventDefault()
           if (!title.trim()) return
           addSalvage(project.id, { kind, title: title.trim(), note: note.trim() || undefined })
+          toast(`♻️ Salvaged “${title.trim()}”.`)
           setTitle('')
           setNote('')
         }}

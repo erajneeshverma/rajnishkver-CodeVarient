@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { Modal, Section } from '../components/ui'
 import { causes, paths, rules, type Condition } from '../config'
 import { useGraveyard } from '../store/useGraveyard'
+import { toast } from '../store/useToast'
 import type { Project } from '../types'
 
 const signalLabels: Record<string, string> = {
@@ -139,6 +140,7 @@ function DataTools() {
             onClick={() => {
               if (confirm === 'reset') resetDemo()
               else clearAll()
+              toast(confirm === 'reset' ? 'Demo projects loaded.' : 'The graveyard is empty.')
               setConfirm(null)
             }}
           >

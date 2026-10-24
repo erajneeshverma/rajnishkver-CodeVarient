@@ -2,6 +2,7 @@ import { Archive, Eye, Flag, FolderGit2, Milestone, Pause, Play, Shovel, Signpos
 import { useState, type ComponentType } from 'react'
 import { cx, formatDate, todayISO } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
+import { toast } from '../store/useToast'
 import type { EventType, Project } from '../types'
 
 const icons: Record<EventType, { icon: ComponentType<{ className?: string }>; color: string; label: string }> = {
@@ -29,6 +30,7 @@ export function Timeline({ project }: { project: Project }) {
     e.preventDefault()
     if (!text.trim()) return
     logEvent(project.id, type, text.trim(), new Date(date + 'T12:00:00').toISOString())
+    toast(type === 'milestone' ? 'Milestone added to the timeline.' : 'Note added to the timeline.')
     setText('')
   }
 

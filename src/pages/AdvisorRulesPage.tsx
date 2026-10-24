@@ -1,10 +1,10 @@
-import { Download, RotateCcw, Upload } from 'lucide-react'
 import { useTitle } from '../lib/useTitle'
 import { useRef, useState } from 'react'
-import { Modal, Section } from '../components/ui'
+import { ActionZone, DataCard, type Payload } from '../canvas/Canvas'
+import { Section } from '../components/ui'
 import { causes, paths, rules, type Condition } from '../config'
 import { downloadFile } from '../lib/download'
-import { localDate } from '../lib/util'
+import { cx, localDate } from '../lib/util'
 import { parseExport } from '../lib/validate'
 import { useGraveyard } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
@@ -71,87 +71,133 @@ export function AdvisorRulesPage() {
             </Section>
           )
         })}
-        <Section title="Your data">
-          <DataTools />
-        </Section>
       </div>
+
+      <Section title="Your data">
+        <DataTools />
+      </Section>
     </div>
   )
 }
 
+/** Data tools as a canvas: drag the graveyard card into a zone, or drop a JSON file to import. */
 function DataTools() {
   const { projects, replaceAll, resetDemo, clearAll } = useGraveyard()
   const fileRef = useRef<HTMLInputElement>(null)
   const [msg, setMsg] = useState('')
-  const [confirm, setConfirm] = useState<'reset' | 'clear' | null>(null)
-
-  const exportJson = () =>
-    downloadFile(`project-graveyard-${localDate()}.json`, JSON.stringify({ version: 1, projects }, null, 2), 'application/json')
+  const [fileOver, setFileOver] = useState(false)
+  const plural = (n: number) => `${n} project${n === 1 ? '' : 's'}`
 
   const importJson = async (file: File) => {
     try {
       const imported = parseExport(await file.text())
       const previous = projects
       replaceAll(imported)
-      setMsg(`Imported ${imported.length} project${imported.length === 1 ? '' : 's'}.`)
-      toast(`Imported ${imported.length} project${imported.length === 1 ? '' : 's'}.`, { label: 'Undo', run: () => replaceAll(previous) })
+      setMsg(`Imported ${plural(imported.length)} from ${file.name}.`)
+      toast(`📥 Imported ${plural(imported.length)}.`, { label: 'Undo', run: () => replaceAll(previous) })
     } catch (e) {
       setMsg((e as Error).message)
     }
   }
 
+  const replaceWith = (action: () => void, message: string) => {
+    const previous = projects
+    action()
+    toast(message, { label: 'Undo', run: () => replaceAll(previous) })
+  }
+
+  const isGraveyard = (p: Payload) => p.kind === 'graveyard'
+
   return (
-    <div className="space-y-2 text-sm">
-      <p className="mb-3 text-muted">Everything is stored in this browser only. Export to back it up or move it.</p>
-      <button type="button" className="btn-ghost w-full" onClick={exportJson}>
-        <Download className="size-4" /> Export JSON
-      </button>
-      <button type="button" className="btn-ghost w-full" onClick={() => fileRef.current?.click()}>
-        <Upload className="size-4" /> Import JSON
-      </button>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/json"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          // Reset so picking the same file again still fires a change.
-          e.target.value = ''
-          if (file) importJson(file)
-        }}
-      />
-      <button type="button" className="btn-ghost w-full" onClick={() => setConfirm('reset')}>
-        <RotateCcw className="size-4" /> Load demo projects
-      </button>
-      <button type="button" className="btn-danger w-full" onClick={() => setConfirm('clear')}>
-        Empty the graveyard
-      </button>
+    <div className="text-sm">
+      <p className="mb-4 text-muted">Everything is stored in this browser only. Drag the graveyard card into a zone to back it up, reset it or clear it.</p>
+      <div className="grid gap-4 md:grid-cols-[13rem_1fr]">
+        <div className="flex justify-center">
+          <DataCard id="graveyard" payload={{ kind: 'graveyard' }} label={`Your graveyard, ${plural(projects.length)}`} className="w-full max-w-[13rem]" hint={false}>
+            <div className="tombstone border border-line bg-stone px-4 pb-5 pt-8 text-center">
+              <p className="text-3xl" aria-hidden>
+                🪦
+              </p>
+              <p className="mt-1 font-display text-lg font-semibold">Your graveyard</p>
+              <p className="text-xs text-muted">{plural(projects.length)}</p>
+            </div>
+          </DataCard>
+        </div>
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          <ActionZone
+            id="export-json"
+            label="Export JSON"
+            icon="💾"
+            hint="Download a backup"
+            accepts={isGraveyard}
+            onDrop={() => {
+              downloadFile(`project-graveyard-${localDate()}.json`, JSON.stringify({ version: 1, projects }, null, 2), 'application/json')
+              toast(`💾 Backed up ${plural(projects.length)}.`)
+            }}
+          />
+          <ActionZone
+            id="load-demo"
+            label="Load demo projects"
+            icon="🎭"
+            tone="violet"
+            hint="Replaces what’s here (you can undo)"
+            accepts={isGraveyard}
+            onDrop={() => replaceWith(resetDemo, '🎭 Demo projects loaded.')}
+          />
+          <ActionZone
+            id="empty"
+            label="Empty the graveyard"
+            icon="🧹"
+            tone="danger"
+            hint="Removes every project (you can undo)"
+            accepts={isGraveyard}
+            onDrop={() => replaceWith(clearAll, '🧹 The graveyard is empty.')}
+          />
+          {/* Files come from the desktop, so this zone takes a native file drop. */}
+          <label
+            htmlFor="import-file"
+            data-zone="import"
+            onDragOver={(e) => {
+              e.preventDefault()
+              setFileOver(true)
+            }}
+            onDragLeave={() => setFileOver(false)}
+            onDrop={(e) => {
+              e.preventDefault()
+              setFileOver(false)
+              const file = e.dataTransfer.files[0]
+              if (file) importJson(file)
+            }}
+            className={cx(
+              'block cursor-pointer rounded-xl border-2 border-dashed p-3 transition',
+              fileOver ? 'scale-[1.02] border-emerald-500 bg-emerald-500/15 ring-2 ring-emerald-500' : 'border-emerald-500/30 hover:border-emerald-500/60',
+            )}
+          >
+            <span className="flex items-center gap-2 font-medium">
+              <span aria-hidden>📥</span> Import JSON
+            </span>
+            <span className="mt-0.5 block text-xs text-muted">{fileOver ? 'Release to import' : 'Drop a backup file here (or press to browse)'}</span>
+            <input
+              id="import-file"
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                // Reset so picking the same file again still fires a change.
+                e.target.value = ''
+                if (file) importJson(file)
+              }}
+            />
+          </label>
+        </div>
+      </div>
       {msg && (
-        <p role="status" className="text-xs text-muted">
+        <p role="status" className="mt-3 text-xs text-muted">
           {msg}
         </p>
       )}
-      <Modal open={confirm !== null} onClose={() => setConfirm(null)} title={confirm === 'reset' ? 'Load demo projects?' : 'Empty the graveyard?'}>
-        <p className="text-sm text-muted">This replaces all {projects.length} projects currently in your graveyard.</p>
-        <div className="mt-6 flex justify-end gap-2">
-          <button type="button" className="btn-ghost" onClick={() => setConfirm(null)}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn-danger"
-            onClick={() => {
-              if (confirm === 'reset') resetDemo()
-              else clearAll()
-              toast(confirm === 'reset' ? 'Demo projects loaded.' : 'The graveyard is empty.')
-              setConfirm(null)
-            }}
-          >
-            Replace
-          </button>
-        </div>
-      </Modal>
     </div>
   )
 }

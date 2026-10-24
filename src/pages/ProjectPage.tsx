@@ -95,7 +95,7 @@ export function ProjectPage() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {decision && decisionCfg && (
             <section
               className={
@@ -176,7 +176,7 @@ export function ProjectPage() {
           </Section>
         </div>
 
-        <aside className="space-y-6">
+        <aside className="min-w-0 space-y-6">
           <Section
             title="Today’s assessment"
             action={

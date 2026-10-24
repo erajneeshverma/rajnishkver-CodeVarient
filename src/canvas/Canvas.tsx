@@ -319,7 +319,7 @@ export function ActionZone({
       )}
       {children}
       {bare && over && overText !== '' && (
-        <span className="pointer-events-none absolute inset-0 grid place-items-center rounded-xl bg-bg/60 text-sm font-semibold backdrop-blur-[1px]">
+        <span className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-xl bg-bg/75 p-3 text-center text-xs font-semibold leading-snug backdrop-blur-[2px] sm:text-sm">
           {overText ?? `Release to drop into ${label}`}
         </span>
       )}

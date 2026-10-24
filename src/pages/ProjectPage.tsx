@@ -47,7 +47,7 @@ export function ProjectPage() {
             <StatusBadge status={status} />
             {project.hauntAt && project.status === 'resting' && (
               <span className="inline-flex items-center gap-1 text-xs text-muted">
-                <Bell className="size-3" /> Haunts you {relativeTime(project.hauntAt)}
+                <Bell className="size-3" /> {status === 'haunting' ? `Reminder was due ${relativeTime(project.hauntAt)}` : `Haunts you ${relativeTime(project.hauntAt)}`}
               </span>
             )}
           </div>

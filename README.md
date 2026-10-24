@@ -83,14 +83,15 @@ src/
   pages/      Archive, Bury, Project, Insights, Salvage Yard, How advice works
 ```
 
-Accessibility: keyboard-navigable, focus-trapped dialogs, labelled controls, respects *reduce motion*, light/dark themes.
+Accessibility: keyboard-navigable (`/` search, `b` bury), focus-trapped dialogs, labelled controls, respects *reduce motion*,
+light/dark themes, and zero axe-core violations on every page in both themes (WCAG AA contrast).
 
 ## Run it
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm test         # advisor, insights and GitHub-import tests
+npm test         # 31 tests: advisor, insights, import/export validation, GitHub parsing
 npm run build
 ```
 

@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react'
+import { useTitle } from '../lib/useTitle'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Empty } from '../components/ui'
@@ -8,6 +9,7 @@ import { useGraveyard } from '../store/useGraveyard'
 import type { SalvageKind } from '../types'
 
 export function SalvagePage() {
+  useTitle('Salvage Yard')
   const projects = useGraveyard((s) => s.projects)
   const [kind, setKind] = useState<SalvageKind | 'all'>('all')
   const [query, setQuery] = useState('')

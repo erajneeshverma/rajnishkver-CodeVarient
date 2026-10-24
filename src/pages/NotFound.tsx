@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useTitle } from '../lib/useTitle'
 
 export function NotFound() {
+  useTitle('Not found')
   return (
     <div className="py-20 text-center">
       <p className="text-5xl" aria-hidden>

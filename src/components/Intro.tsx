@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useGraveyard } from '../store/useGraveyard'
@@ -22,7 +22,7 @@ export function Intro() {
   }
 
   return (
-    <motion.section
+    <m.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       aria-label="Welcome"
@@ -64,6 +64,6 @@ export function Intro() {
           </button>
         )}
       </div>
-    </motion.section>
+    </m.section>
   )
 }

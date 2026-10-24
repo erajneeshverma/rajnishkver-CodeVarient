@@ -1,4 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
+import { useTitle } from '../lib/useTitle'
 import { Ghost, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -13,6 +14,7 @@ import type { StatusId } from '../types'
 type Sort = 'buried' | 'touched' | 'completion' | 'name'
 
 export function ArchivePage() {
+  useTitle()
   const projects = useGraveyard((s) => s.projects)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<StatusId | 'all'>('all')

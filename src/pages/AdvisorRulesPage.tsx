@@ -1,4 +1,5 @@
 import { Download, RotateCcw, Upload } from 'lucide-react'
+import { useTitle } from '../lib/useTitle'
 import { useRef, useState } from 'react'
 import { Modal, Section } from '../components/ui'
 import { causes, paths, rules, type Condition } from '../config'
@@ -31,6 +32,7 @@ function describe(c: Condition): string {
 }
 
 export function AdvisorRulesPage() {
+  useTitle('How advice works')
   return (
     <div className="space-y-6">
       <div>

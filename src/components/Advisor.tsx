@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { ChevronDown, Minus, Plus, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { appConfig, paths } from '../config'
@@ -86,7 +86,7 @@ function PathCard({
       </button>
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div id={panelId} initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+          <m.div id={panelId} initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
             <div className="space-y-3 border-t border-line/60 px-4 pb-4 pt-3 text-sm">
               <p className="text-muted">
                 <strong className="text-ink">{cfg.verb}.</strong> {cfg.summary}
@@ -100,7 +100,7 @@ function PathCard({
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </li>

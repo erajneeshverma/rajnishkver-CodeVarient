@@ -8,6 +8,7 @@ import { importRepo } from '../lib/github'
 import { cx, todayISO, uid } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
+import { useTitle } from '../lib/useTitle'
 import type { Project, ProjectDraft, SalvageKind } from '../types'
 
 const steps = [
@@ -58,6 +59,7 @@ export function BuryPage() {
   const { id } = useParams()
   const existing = useProject(id)
   const editing = Boolean(existing)
+  useTitle(existing ? `Edit ${existing.name}` : 'Bury a project')
   const { bury, edit, saveDraft, clearDraft } = useGraveyard()
   const savedDraft = useGraveyard((s) => s.draft)
   const navigate = useNavigate()

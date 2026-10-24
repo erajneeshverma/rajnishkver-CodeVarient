@@ -1,5 +1,5 @@
 import { Moon, Plus, Sun } from 'lucide-react'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { cx } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
@@ -83,7 +83,18 @@ export function Layout() {
         </nav>
       </header>
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div role="status" className="py-24 text-center text-sm text-muted">
+              <span aria-hidden className="mr-2 inline-block animate-pulse">
+                🕯️
+              </span>
+              Lighting the lanterns…
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
       <footer className="border-t border-line py-6 text-center text-xs text-muted">
         Unfinished isn’t failed. · Built for Code Variant Build 01 · Everything stays in your browser.

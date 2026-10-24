@@ -8,12 +8,14 @@ import { causes, hauntOptions, paths, relevanceOptions, salvageKinds } from '../
 import { effectiveStatus, formatDate, relativeTime } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
+import { useTitle } from '../lib/useTitle'
 import type { Relevance, SalvageKind } from '../types'
 import { NotFound } from './NotFound'
 
 export function ProjectPage() {
   const { id } = useParams()
   const project = useProject(id)
+  useTitle(project?.name)
   const { hash } = useLocation()
   const navigate = useNavigate()
   const { remove, restore, hauntIn, clearHaunt, reopen } = useGraveyard()

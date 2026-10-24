@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { causes, relevanceOptions } from '../config'
@@ -136,14 +136,14 @@ export function Modal({
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onMouseDown={(e) => e.target === e.currentTarget && onClose()}
         >
-          <motion.div
+          <m.div
             ref={ref}
             role="dialog"
             aria-modal="true"
@@ -160,8 +160,8 @@ export function Modal({
               </button>
             </div>
             {children}
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   )

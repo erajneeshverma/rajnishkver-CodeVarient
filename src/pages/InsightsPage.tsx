@@ -1,4 +1,5 @@
 import { Lightbulb } from 'lucide-react'
+import { useTitle } from '../lib/useTitle'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Empty, Section } from '../components/ui'
@@ -8,6 +9,7 @@ import { cx } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
 
 export function InsightsPage() {
+  useTitle('Insights')
   const projects = useGraveyard((s) => s.projects)
   const i = useMemo(() => computeInsights(projects), [projects])
 

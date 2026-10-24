@@ -108,6 +108,8 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
         collisionDetection={collision}
         // Zones can move while a card is held (page scroll, toasts, sticky panels), so keep their positions fresh.
         measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+        // Only scroll when the card is right at the edge, so aiming at the bottom dock doesn't move the page.
+        autoScroll={{ threshold: { x: 0, y: 0.06 }, acceleration: 6 }}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onDragCancel={() => setDragging(null)}

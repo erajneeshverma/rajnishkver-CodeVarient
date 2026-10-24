@@ -3,6 +3,7 @@ import { useTitle } from '../lib/useTitle'
 import { Ghost, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ArchiveDock } from '../components/ArchiveDock'
 import { Intro } from '../components/Intro'
 import { Tombstone } from '../components/Tombstone'
 import { Empty } from '../components/ui'
@@ -52,8 +53,8 @@ export function ArchivePage() {
       <div className="mb-8 flex flex-col gap-2">
         <h1 className="font-display text-3xl font-semibold sm:text-4xl">Your graveyard</h1>
         <p className="max-w-2xl text-muted">
-          Every unfinished project, laid to rest with the story of why it stopped. Visit one to hear what the Revival Advisor
-          thinks it deserves.
+          Every unfinished project, laid to rest with the story of why it stopped. Open one to hear what the Revival Advisor
+          thinks it deserves, or <strong className="text-ink">drag a tombstone onto an action</strong> at the bottom of the screen.
         </p>
       </div>
 
@@ -147,7 +148,7 @@ export function ArchivePage() {
           </AnimatePresence>
         </div>
       )}
-      <div aria-hidden className="mt-10 h-px bg-gradient-to-r from-transparent via-moss/50 to-transparent" />
+      {projects.length > 0 && <ArchiveDock />}
     </div>
   )
 }

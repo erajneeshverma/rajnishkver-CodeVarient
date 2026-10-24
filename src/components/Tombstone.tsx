@@ -1,6 +1,8 @@
 import { m } from 'framer-motion'
 import { Bell } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { DataCard } from '../canvas/Canvas'
+import { ProjectChip } from './ProjectChip'
 import { causes } from '../config'
 import { effectiveStatus, formatDate, relativeTime } from '../lib/util'
 import type { Project } from '../types'
@@ -14,6 +16,14 @@ export function Tombstone({ project }: { project: Project }) {
 
   return (
     <m.div layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
+      <DataCard
+        id={`tomb-${project.id}`}
+        payload={{ kind: 'project', id: project.id }}
+        label={project.name}
+        className="h-full"
+        hint={false}
+        preview={() => <ProjectChip project={project} className="w-60 shadow-2xl" />}
+      >
       <Link
         to={`/project/${project.id}`}
         className="tombstone group relative flex h-full flex-col border border-line bg-stone px-5 pb-5 pt-10 text-center shadow-sm transition hover:-translate-y-1 hover:border-lantern/60 hover:shadow-lg hover:shadow-lantern/5"
@@ -47,6 +57,7 @@ export function Tombstone({ project }: { project: Project }) {
           </div>
         </div>
       </Link>
+      </DataCard>
     </m.div>
   )
 }

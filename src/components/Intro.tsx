@@ -2,7 +2,6 @@ import { m } from 'framer-motion'
 import { X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useGraveyard } from '../store/useGraveyard'
-import { toast } from '../store/useToast'
 
 const steps = [
   { emoji: '🪦', title: 'Bury it', text: 'Record what it was, how far it got and what’s left. Or import it from GitHub.' },
@@ -11,15 +10,8 @@ const steps = [
 ]
 
 export function Intro() {
-  const { introSeen, dismissIntro, projects, clearAll, replaceAll } = useGraveyard()
+  const { introSeen, dismissIntro, projects } = useGraveyard()
   if (introSeen) return null
-
-  const startFresh = () => {
-    const previous = projects
-    clearAll()
-    dismissIntro()
-    toast('Demo projects cleared. Your graveyard is empty.', { label: 'Undo', run: () => replaceAll(previous) })
-  }
 
   return (
     <m.section
@@ -36,7 +28,9 @@ export function Intro() {
       <h2 className="mt-1 font-display text-2xl font-semibold">Unfinished isn’t failed.</h2>
       <p className="mt-1 max-w-2xl text-sm text-muted">
         This is a memory for every project you started and didn’t finish, plus an honest answer about what to do with it next.
-        {projects.length > 0 && ' The projects below are a demo graveyard, so feel free to poke around.'}
+        {projects.length > 0 && ' The projects below are a demo graveyard, so feel free to poke around.'}{' '}
+        <strong className="text-ink">Everything happens by drag and drop:</strong> pick up a card and drop it into an action zone. Keyboard: Space to pick up,
+        arrows to choose a zone, Space to drop.
       </p>
       <ol className="mt-5 grid gap-3 sm:grid-cols-3">
         {steps.map((s, i) => (
@@ -58,11 +52,6 @@ export function Intro() {
         <button type="button" onClick={dismissIntro} className="btn-ghost">
           Explore the demo
         </button>
-        {projects.length > 0 && (
-          <button type="button" onClick={startFresh} className="btn text-muted hover:text-ink">
-            Start with an empty graveyard
-          </button>
-        )}
       </div>
     </m.section>
   )

@@ -66,11 +66,11 @@ export function Layout() {
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/favicon.svg" alt="" className="size-8" />
-            <span className="font-display text-lg font-semibold leading-tight">
+            <span className="font-display text-base font-semibold leading-tight sm:text-lg">
               The Project <span className="text-lantern">Graveyard</span>
             </span>
           </Link>
-          <nav aria-label="Main" className="ml-4 hidden gap-1 md:flex">
+          <nav aria-label="Main" className="ml-4 hidden gap-1 lg:flex">
             {nav.map((n) => (
               <NavLink
                 key={n.to}
@@ -100,7 +100,7 @@ export function Layout() {
             </Link>
           </div>
         </div>
-        <nav aria-label="Main mobile" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2 md:hidden">
+        <nav aria-label="Main mobile" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2 lg:hidden">
           {nav.map((n) => (
             <NavLink
               key={n.to}

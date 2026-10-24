@@ -94,7 +94,7 @@ export function ArchivePage() {
         ))}
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+      <div className="mb-6 flex flex-wrap gap-3">
         <div role="radiogroup" aria-label="View" className="flex shrink-0 rounded-lg border border-line bg-surface p-1">
           {(['canvas', 'grid'] as const).map((v) => (
             <button
@@ -109,7 +109,7 @@ export function ArchivePage() {
             </button>
           ))}
         </div>
-        <label className="relative flex-1">
+        <label className="relative min-w-[min(100%,16rem)] flex-1">
           <span className="sr-only">Search projects</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input
@@ -121,9 +121,9 @@ export function ArchivePage() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <label>
+        <label className="w-full sm:w-auto">
           <span className="sr-only">Filter by cause</span>
-          <select className="field sm:w-48" value={cause} onChange={(e) => setCause(e.target.value)}>
+          <select className="field w-full sm:w-48" value={cause} onChange={(e) => setCause(e.target.value)}>
             <option value="all">Any cause of death</option>
             {causes.map((c) => (
               <option key={c.id} value={c.id}>
@@ -132,9 +132,9 @@ export function ArchivePage() {
             ))}
           </select>
         </label>
-        <label>
+        <label className="w-full sm:w-auto">
           <span className="sr-only">Sort</span>
-          <select className="field sm:w-44" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+          <select className="field w-full sm:w-44" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
             <option value="buried">Recently buried</option>
             <option value="touched">Recently touched</option>
             <option value="completion">Most complete</option>

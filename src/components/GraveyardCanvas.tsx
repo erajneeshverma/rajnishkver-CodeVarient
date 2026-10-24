@@ -19,9 +19,13 @@ import type { Project } from '../types'
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
-/** Where a stone stands if the user hasn't placed it: a loose, slightly staggered grid. */
-function defaultSpot(i: number, n: number) {
-  const cols = Math.max(2, Math.ceil(Math.sqrt(n * 1.6)))
+/**
+ * Where a stone stands if the user hasn't placed it: a loose, slightly staggered grid
+ * with as many columns as the field is wide enough for (two on a phone).
+ */
+function defaultSpot(i: number, n: number, fieldWidth: number) {
+  const fit = Math.max(2, Math.floor(fieldWidth / 190))
+  const cols = Math.min(fit, Math.max(2, Math.ceil(Math.sqrt(n * 1.6))))
   const rows = Math.ceil(n / cols)
   const col = i % cols
   const row = Math.floor(i / cols)
@@ -49,6 +53,14 @@ export function GraveyardCanvas({ projects }: { projects: Project[] }) {
   const { positions, place, remove, restore, hauntIn, decide, put } = store
   const fieldRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
+  const [fieldWidth, setFieldWidth] = useState(800)
+  useLayoutEffect(() => {
+    const el = fieldRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setFieldWidth(e.contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const snapshotUndo = (before: Project) => ({ label: 'Undo', run: () => put(before) })
 
@@ -148,7 +160,7 @@ export function GraveyardCanvas({ projects }: { projects: Project[] }) {
       tone={z.tone}
       fx={z.fx}
       overText={`Release: ${z.hint.toLowerCase()}`}
-      className={cx('flex-1 bg-surface/70 p-2 backdrop-blur-sm md:p-3', z.id === 'resurrect' && 'rounded-[2rem]')}
+      className={cx('flex-1 bg-surface/70 p-2 backdrop-blur-sm lg:p-3', z.id === 'resurrect' && 'rounded-[2rem]')}
       accepts={(pl) => {
         const p = find(pl)
         return Boolean(p && z.accepts(p))
@@ -159,10 +171,10 @@ export function GraveyardCanvas({ projects }: { projects: Project[] }) {
       }}
     >
       <div className="flex h-full flex-col items-center justify-center gap-1 py-2 text-center">
-        <span aria-hidden className="text-2xl drop-shadow md:text-4xl">
+        <span aria-hidden className="text-2xl drop-shadow lg:text-4xl">
           {z.icon}
         </span>
-        <span className="font-display text-xs font-semibold leading-tight sm:text-sm md:text-base">{z.label}</span>
+        <span className="font-display text-xs font-semibold leading-tight sm:text-sm lg:text-base">{z.label}</span>
         <span className="hidden text-xs text-muted sm:block">{z.hint}</span>
       </div>
     </ActionZone>
@@ -176,8 +188,8 @@ export function GraveyardCanvas({ projects }: { projects: Project[] }) {
 
   return (
     <section ref={sectionRef} aria-label="Graveyard canvas" className="relative">
-      <div className="grid gap-3 md:grid-cols-[11rem_1fr_11rem]">
-        <div className="grid grid-cols-3 gap-2 md:flex md:flex-col">{zones.left.map(renderZone)}</div>
+      <div className="grid gap-3 lg:grid-cols-[11rem_1fr_11rem]">
+        <div className="grid grid-cols-3 gap-2 lg:flex lg:flex-col">{zones.left.map(renderZone)}</div>
 
         <ActionZone
           bare
@@ -191,10 +203,10 @@ export function GraveyardCanvas({ projects }: { projects: Project[] }) {
           onDrop={move}
           className="border-solid border-line p-0"
         >
-          <div ref={fieldRef} className="relative h-[26rem] overflow-hidden rounded-[10px] md:h-[34rem]">
+          <div ref={fieldRef} className="relative h-[26rem] overflow-hidden rounded-[10px] sm:h-[30rem] lg:h-[34rem]">
             <Scenery />
             {projects.map((p, i) => {
-              const pos = positions[p.id] ?? defaultSpot(i, projects.length)
+              const pos = positions[p.id] ?? defaultSpot(i, projects.length, fieldWidth)
               return (
                 <div
                   key={p.id}
@@ -212,7 +224,7 @@ export function GraveyardCanvas({ projects }: { projects: Project[] }) {
           </div>
         </ActionZone>
 
-        <div className="grid grid-cols-3 gap-2 md:flex md:flex-col">{zones.right.map(renderZone)}</div>
+        <div className="grid grid-cols-3 gap-2 lg:flex lg:flex-col">{zones.right.map(renderZone)}</div>
       </div>
       <DragHint containerRef={sectionRef} enabled={projects.length > 0} />
       <p className="mt-2 text-center text-xs text-muted">

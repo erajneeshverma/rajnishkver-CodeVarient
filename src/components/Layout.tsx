@@ -1,7 +1,7 @@
 import { Moon, Plus, Sun } from 'lucide-react'
 import { Suspense, useEffect } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { cx } from '../lib/util'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { cx, effectiveStatus } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
 import { Toaster } from './Toaster'
 
@@ -15,7 +15,37 @@ const nav = [
 export function Layout() {
   const theme = useGraveyard((s) => s.theme)
   const toggleTheme = useGraveyard((s) => s.toggleTheme)
+  const haunting = useGraveyard((s) => s.projects.filter((p) => effectiveStatus(p) === 'haunting').length)
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+
+  // Keyboard shortcuts: "/" jumps to search, "b" starts a new burial.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return
+      const t = e.target as HTMLElement
+      if (t.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return
+      if (e.key === '/') {
+        e.preventDefault()
+        if (pathname !== '/') navigate('/')
+        setTimeout(() => document.getElementById('search')?.focus(), 50)
+      } else if (e.key === 'b' && pathname !== '/bury') {
+        navigate('/bury')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pathname, navigate])
+
+  const badge = (to: string) =>
+    to === '/' && haunting > 0 ? (
+      <span
+        aria-label={`${haunting} haunting`}
+        className="ml-1.5 inline-grid min-w-5 place-items-center rounded-full bg-violet-500/20 px-1.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300"
+      >
+        {haunting}
+      </span>
+    ) : null
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -49,6 +79,7 @@ export function Layout() {
                 }
               >
                 {n.label}
+                {badge(n.to)}
               </NavLink>
             ))}
           </nav>
@@ -78,6 +109,7 @@ export function Layout() {
               }
             >
               {n.label}
+              {badge(n.to)}
             </NavLink>
           ))}
         </nav>
@@ -98,6 +130,10 @@ export function Layout() {
       </main>
       <footer className="border-t border-line py-6 text-center text-xs text-muted">
         Unfinished isn’t failed. · Built for Code Variant Build 01 · Everything stays in your browser.
+        <span className="hidden sm:inline">
+          {' '}
+          · Shortcuts: <kbd className="rounded border border-line px-1">/</kbd> search, <kbd className="rounded border border-line px-1">b</kbd> bury
+        </span>
       </footer>
       <Toaster />
     </div>

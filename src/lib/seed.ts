@@ -1,17 +1,22 @@
 import type { Project } from '../types'
-import { addDays, uid } from './util'
+import { addDays } from './util'
 
 const ago = (days: number) => addDays(-days)
 
+// Fixed ids so demo links keep working across reloads, even before anything is saved.
+let n = 0
+const sid = () => `demo-${++n}`
+
 function ev(type: Project['events'][number]['type'], daysAgo: number, text: string) {
-  return { id: uid(), type, at: ago(daysAgo), text }
+  return { id: sid(), type, at: ago(daysAgo), text }
 }
 
 /** Demo graveyard so the first visit isn't empty. */
 export function seedProjects(): Project[] {
+  n = 0
   return [
     {
-      id: uid(),
+      id: 'demo-studybuddy',
       name: 'StudyBuddy',
       description: 'A Pomodoro timer that pairs you with a random study partner over video.',
       goal: 'Matchmaking by subject, shared timer, streaks and a leaderboard.',
@@ -25,7 +30,7 @@ export function seedProjects(): Project[] {
       cause: 'time',
       causeNote: 'End-semester exams arrived and I never opened it again.',
       assessment: { interest: 4, relevance: 'yes', assessedAt: ago(70) },
-      salvage: [{ id: uid(), kind: 'component', title: 'Matchmaking queue', note: 'Firestore-based FIFO queue with timeouts' }],
+      salvage: [{ id: sid(), kind: 'component', title: 'Matchmaking queue', note: 'Firestore-based FIFO queue with timeouts' }],
       status: 'resting',
       hauntAt: ago(2),
       events: [
@@ -36,7 +41,7 @@ export function seedProjects(): Project[] {
       ],
     },
     {
-      id: uid(),
+      id: 'demo-cryptopulse',
       name: 'CryptoPulse',
       description: 'A dashboard that ranked NFT collections by social buzz.',
       goal: 'Real-time sentiment from Twitter + Discord, price alerts.',
@@ -55,7 +60,7 @@ export function seedProjects(): Project[] {
       events: [ev('started', 900, 'Started'), ev('abandoned', 780, 'Stopped pushing'), ev('buried', 30, 'Buried in the graveyard')],
     },
     {
-      id: uid(),
+      id: 'demo-reciperadar',
       name: 'RecipeRadar',
       description: 'Snap your fridge, get recipes for what you have.',
       goal: 'Image recognition of ingredients, recipe matching, shopping list.',
@@ -69,12 +74,12 @@ export function seedProjects(): Project[] {
       cause: 'scope',
       causeNote: 'Kept adding diets, allergies, meal plans… never shipped the core.',
       assessment: { interest: 4, relevance: 'yes', assessedAt: ago(20) },
-      salvage: [{ id: uid(), kind: 'asset', title: 'Food illustration set', note: '40 hand-drawn SVG icons' }],
+      salvage: [{ id: sid(), kind: 'asset', title: 'Food illustration set', note: '40 hand-drawn SVG icons' }],
       status: 'resting',
       events: [ev('started', 500, 'Started'), ev('milestone', 450, 'Ingredient detection prototype'), ev('abandoned', 400, 'Stalled'), ev('buried', 20, 'Buried in the graveyard')],
     },
     {
-      id: uid(),
+      id: 'demo-termichat',
       name: 'TermiChat',
       description: 'A terminal-based chat client for team channels.',
       goal: 'Vim keybindings, threads, notifications.',
@@ -89,8 +94,8 @@ export function seedProjects(): Project[] {
       causeNote: 'Built the fun part, the rest felt like chores.',
       assessment: { interest: 2, relevance: 'partly', assessedAt: ago(150) },
       salvage: [
-        { id: uid(), kind: 'component', title: 'Async TUI event loop', note: 'tokio + crossterm, reusable for any TUI' },
-        { id: uid(), kind: 'learning', title: 'How to structure a ratatui app' },
+        { id: sid(), kind: 'component', title: 'Async TUI event loop', note: 'tokio + crossterm, reusable for any TUI' },
+        { id: sid(), kind: 'learning', title: 'How to structure a ratatui app' },
       ],
       status: 'revived',
       decision: {
@@ -108,7 +113,7 @@ export function seedProjects(): Project[] {
       ],
     },
     {
-      id: uid(),
+      id: 'demo-smart-mirror',
       name: 'Smart Mirror',
       description: 'A Raspberry Pi mirror showing weather, calendar and news.',
       goal: 'Voice control and face recognition per family member.',

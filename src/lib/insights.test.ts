@@ -34,3 +34,12 @@ describe('stack counting', () => {
     expect(i.byStack.find((s) => s.id === 'firebase')).toMatchObject({ label: 'Firebase', value: 2 })
   })
 })
+
+describe('seed data', () => {
+  it('has stable ids so demo links survive a reload', () => {
+    const ids = (ps: ReturnType<typeof seedProjects>) => ps.flatMap((p) => [p.id, ...p.events.map((e) => e.id), ...p.salvage.map((s) => s.id)])
+    const a = ids(seedProjects())
+    expect(ids(seedProjects())).toEqual(a)
+    expect(new Set(a).size).toBe(a.length)
+  })
+})

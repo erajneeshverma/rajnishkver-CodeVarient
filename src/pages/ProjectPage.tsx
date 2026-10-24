@@ -165,6 +165,17 @@ export function ProjectPage() {
             </div>
           </Section>
 
+          {/* On phones the assessment card sits far below, so show a compact version next to the advice. */}
+          <div className="card flex items-center gap-3 p-4 text-sm lg:hidden">
+            <span className="flex-1">
+              <span className="block text-xs text-muted">Today’s assessment</span>
+              Interest {project.assessment.interest}/5 · {relevanceOptions.find((r) => r.id === project.assessment.relevance)?.label}
+            </span>
+            <button type="button" className="btn-ghost py-1.5" onClick={() => setAssessing(true)}>
+              Reassess
+            </button>
+          </div>
+
           <div id="advisor" className="scroll-mt-24">
             <Section title={decision ? 'Revival Advisor (for reference)' : 'Revival Advisor'}>
               <Advisor project={project} />
@@ -178,6 +189,7 @@ export function ProjectPage() {
 
         <aside className="min-w-0 space-y-6">
           <Section
+            className="hidden lg:block"
             title="Today’s assessment"
             action={
               <button type="button" className="btn-ghost py-1.5" onClick={() => setAssessing(true)}>

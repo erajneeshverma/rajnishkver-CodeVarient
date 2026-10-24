@@ -140,4 +140,6 @@ npm run build
 
 See [`docs/DEMO.md`](docs/DEMO.md) for a 3-minute demo script.
 
+**Submission details:** [`docs/SUBMISSION.md`](docs/SUBMISSION.md) (links, descriptions, twist summary).
+
 **Presentation:** final deck in [PDF](docs/Project_Graveyard_CodeVariant_PS05_Final.pdf) and [PowerPoint](docs/Project_Graveyard_CodeVariant_PS05_Final.pptx) (with speaker notes); the Round 1 idea deck is alongside it.

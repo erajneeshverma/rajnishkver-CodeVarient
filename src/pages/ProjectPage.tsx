@@ -1,10 +1,11 @@
-import { ArrowLeft, Bell, BellOff, ExternalLink, Pencil, RotateCcw, Trash2 } from 'lucide-react'
+import { ArrowLeft, Bell, BellOff, ExternalLink, FileDown, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Advisor } from '../components/Advisor'
 import { Timeline } from '../components/Timeline'
 import { Empty, InterestPicker, Modal, Progress, RelevancePicker, Section, StatusBadge } from '../components/ui'
 import { causes, hauntOptions, paths, relevanceOptions, salvageKinds } from '../config'
+import { downloadMarkdown } from '../lib/postmortem'
 import { effectiveStatus, formatDate, relativeTime } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
@@ -85,6 +86,17 @@ export function ProjectPage() {
                 <Bell className="size-4" /> Haunt me later
               </button>
             ))}
+          <button
+            type="button"
+            className="btn-ghost"
+            title="Download a Markdown post-mortem"
+            onClick={() => {
+              downloadMarkdown(project)
+              toast('Post-mortem downloaded as Markdown.')
+            }}
+          >
+            <FileDown className="size-4" /> Export
+          </button>
           <Link to={`/project/${project.id}/edit`} className="btn-ghost">
             <Pencil className="size-4" /> Edit
           </Link>

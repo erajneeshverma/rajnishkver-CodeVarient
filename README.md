@@ -29,6 +29,7 @@ decision about what happens next.
 | **Project Timeline** | Started → milestones → abandoned → revisited → decided, plus your own entries. |
 | **Haunt Me Later** | Set a revisit reminder. Due projects switch to *Haunting* and show on the archive. |
 | **Graveyard Insights** | Why your projects die, how far they get, what you decide, which stacks pile up, plain-language findings and an epitaph wall. |
+| **Export post-mortem** | Download any project as a Markdown report (tombstone, autopsy, ranked advice with reasons, decision, timeline) to keep in its repo. |
 | **Salvage Yard** | Reusable parts (code, lessons, assets) from every project, all in one place. |
 
 <table>

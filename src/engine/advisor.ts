@@ -16,7 +16,7 @@ export interface Reason {
 export interface PathAdvice {
   path: PathId
   score: number
-  /** 0–100, score relative to the best this path could have scored */
+  /** 0–100, score on a scale shared by every path, so it always agrees with the ranking */
   confidence: number
   pros: Reason[]
   cons: Reason[]
@@ -86,9 +86,15 @@ function fill(template: string, signals: Signals, config: AppConfig): string {
 export function advise(project: Project, config: AppConfig, now = new Date()): PathAdvice[] {
   const signals = getSignals(project, now)
 
+  // The best score any path could reach. Using one scale for all paths keeps
+  // the fit percentages in the same order as the ranking.
+  const maxScore = Math.max(
+    1,
+    ...config.paths.map((p) => config.rules.filter((r) => r.path === p.id).reduce((sum, r) => sum + Math.max(0, r.weight), 0)),
+  )
+
   const results = config.paths.map((p): PathAdvice => {
     const pathRules = config.rules.filter((r) => r.path === p.id)
-    const maxScore = pathRules.reduce((sum, r) => sum + Math.max(0, r.weight), 0)
     const pros: Reason[] = []
     const cons: Reason[] = []
     let score = 0
@@ -102,7 +108,7 @@ export function advise(project: Project, config: AppConfig, now = new Date()): P
 
     pros.sort((a, b) => b.weight - a.weight)
     cons.sort((a, b) => a.weight - b.weight)
-    const confidence = maxScore > 0 ? Math.round((Math.max(0, score) / maxScore) * 100) : 0
+    const confidence = Math.min(100, Math.round((Math.max(0, score) / maxScore) * 100))
     return { path: p.id, score, confidence, pros, cons }
   })
 

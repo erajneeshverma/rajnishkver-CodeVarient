@@ -77,3 +77,17 @@ describe('lost interest', () => {
     expect(top(project({ cause: 'interest', interest: 3, completion: 40 }))).not.toBe('restart')
   })
 })
+
+describe('fit percentages', () => {
+  it('never contradict the ranking', () => {
+    const cases = [
+      project({ completion: 35, cause: 'scope', interest: 4, lastTouchedAt: monthsAgo(13), salvage: [{ id: 's', kind: 'asset', title: 'Icons' }] }),
+      project({ completion: 75, cause: 'time', interest: 5 }),
+      project({ cause: 'interest', interest: 2, relevance: 'partly', salvage: [{ id: 's', kind: 'component', title: 'Auth' }] }),
+    ]
+    for (const p of cases) {
+      const fits = advise(p, appConfig, NOW).map((a) => a.confidence)
+      expect(fits).toEqual([...fits].sort((a, b) => b - a))
+    }
+  })
+})

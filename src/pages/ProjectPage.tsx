@@ -15,7 +15,7 @@ import { NotFound } from './NotFound'
 export function ProjectPage() {
   const { id } = useParams()
   const project = useProject(id)
-  useTitle(project?.name)
+  useTitle(project ? project.name : 'Not found')
   const { hash } = useLocation()
   const navigate = useNavigate()
   const { remove, restore, hauntIn, clearHaunt, reopen } = useGraveyard()

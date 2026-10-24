@@ -14,11 +14,13 @@ everyone sees the same graveyard.
 > "At hour 6 we lost our buttons. Every primary action is now a drag: you pick up a data card and drop it into an
 > action zone. Same product, new interaction."
 
-## 3. The graveyard (25 s), on the home page
+## 3. The Graveyard Canvas (30 s), on the home page
 
-- Each project is a **tombstone** with its status. Point out the **"haunting you"** banner.
-- Drag **CryptoPulse** onto **Haunt in 30 days** in the dock. A toast confirms it.
-- Drag **Smart Mirror** onto **Export post-mortem**, and a Markdown report downloads.
+- Tombstones stand in a field, with their status visible at a glance: 👻 haunting, ⚡ risen, grey for R.I.P.
+- Drag **RecipeRadar** to an empty spot to rearrange. The field remembers where you put it.
+- Drag **CryptoPulse** into the ⚡ **Resurrection Circle**. It bursts with light and rises using the advisor's best
+  path. Click **Undo** in the toast to put it back.
+- Drag **Smart Mirror** into 📄 **Post-mortem**, and a Markdown report downloads.
 
 ## 4. Bury a project live (50 s), with "Bury a project"
 

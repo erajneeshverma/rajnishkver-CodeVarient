@@ -7,19 +7,26 @@ Built for **Code Variant · Build 01 · Problem Statement 05**.
 
 **Live demo:** https://project-graveyard-codevariant.vercel.app
 
-![The graveyard: every unfinished project as a tombstone with its status](docs/screenshots/archive.png)
+![The Graveyard Canvas: tombstones in a field, surrounded by action zones](docs/screenshots/archive.png)
 
 ## 🎨 The Canvas Protocol (Variant Factor)
 
 At hour 6 the rules changed: no standard buttons for primary actions. **Every primary action now happens by dragging a
 data card into an action zone.** The product didn't change; the interaction did.
 
+The home screen is now the **Graveyard Canvas**: tombstones stand in a night-time field. You rearrange them by
+dragging them around, and you act on them by dragging them into the zones at its edges:
+🔮 **Séance** (ask the advisor), ⚡ **Resurrection Circle** (revive with the advisor's best path), 🪦 **Eternal Rest**
+(archive), 👻 **Haunting Ground**, 📄 **Post-mortem** and ⚰️ **Exhume**. Every drop plays a small effect (light for a
+revival, dust for a burial, a ghost for a haunt), and every change can be undone.
+
 | Action | Before | Now: drag… | …into |
 | --- | --- | --- | --- |
 | Bury a project | "Lay it to rest" button | the live **tombstone preview** | **The grave** (or *Update the tombstone* when editing) |
 | Choose a revival path | "Choose X" + modal | the **project card** | one of the five **ranked path zones** (fit % and reasons stay visible) |
 | Reconsider a decision | "Reconsider" button | the **decision card** | **Dig it back up** |
-| Haunt me later | button + modal | the project card or a **tombstone** | **Haunt me in 7 / 14 / 30 / 90 days** |
+| Revive or archive in one move | (open project, choose path) | a **tombstone** on the canvas | **Resurrection Circle** / **Eternal Rest** |
+| Haunt me later | button + modal | the project card or a **tombstone** | **Haunt me in 7 / 14 / 30 / 90 days**, or the **Haunting Ground** |
 | Export post-mortem | button | the project card or a tombstone | **Export post-mortem** |
 | Delete | button + confirm | the project card or a tombstone | **Exhume** (toast offers *Undo*) |
 | Salvage a part | "Salvage it" button | the **new part card** | **the salvage bin**; drag a part to **Scrap** to remove it |
@@ -52,7 +59,7 @@ decision about what happens next.
 
 | Feature | What it means |
 | --- | --- |
-| **Project Archive** | Every project as a tombstone with its status (Resting · Haunting · Revived · R.I.P.), with search, filters and sorting. |
+| **Graveyard Canvas** | Every project as a tombstone in a field you arrange yourself, surrounded by action zones; or a Grid view with search, filters and sorting. Status shows at a glance (Resting · Haunting · Revived · R.I.P.). |
 | **Bury a project** | A guided 3-step form (Tombstone → Autopsy → Assess) that autosaves, previews the advice, and finishes by dragging the tombstone into the grave. |
 | **GitHub Import** | Paste a public repo URL to fill in the stack, the dates and a summary from the README. |
 | **The Autopsy** | Tag why it stopped (time, scope creep, tech blocker, tech debt, lost interest, no users) and add a note. |
@@ -75,7 +82,7 @@ decision about what happens next.
   </tr>
   <tr>
     <td><img src="docs/screenshots/rules.png" alt="How advice works page listing every rule" /><br /><sub>How advice works: the rules, straight from config</sub></td>
-    <td><img src="docs/screenshots/light.png" alt="Light mode archive with the action dock" /><br /><sub>Light mode, with the archive's action dock</sub></td>
+    <td><img src="docs/screenshots/light.png" alt="Light mode archive with the action dock" /><br /><sub>The Graveyard Canvas in light mode</sub></td>
   </tr>
   <tr>
     <td colspan="2" align="center"><img src="docs/screenshots/mobile.png" alt="Mobile view of the advisor" width="220" /><br /><sub>Touch drag and drop on phones</sub></td>

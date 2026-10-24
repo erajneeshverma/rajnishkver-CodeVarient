@@ -1,4 +1,4 @@
-import { LazyMotion } from 'framer-motion'
+import { LazyMotion, MotionConfig } from 'framer-motion'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
@@ -10,7 +10,9 @@ const motionFeatures = () => import('./lib/motionFeatures').then((m) => m.defaul
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LazyMotion features={motionFeatures} strict>
-      <App />
+      <MotionConfig reducedMotion="user">
+        <App />
+      </MotionConfig>
     </LazyMotion>
   </StrictMode>,
 )

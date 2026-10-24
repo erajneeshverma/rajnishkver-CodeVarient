@@ -125,13 +125,44 @@ export function Modal({
   children: ReactNode
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
+
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    // Remember what had focus so it gets it back when the dialog closes.
+    const opener = document.activeElement as HTMLElement | null
+    const focusables = () =>
+      [...(ref.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])') ?? [])]
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') return onCloseRef.current()
+      if (e.key !== 'Tab') return
+      const els = focusables()
+      if (!els.length) return
+      const first = els[0]
+      const last = els[els.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
     window.addEventListener('keydown', onKey)
-    ref.current?.querySelector<HTMLElement>('input, textarea, button:not([aria-label="Close"])')?.focus()
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+    const t = setTimeout(() => (focusables().find((el) => el.getAttribute('aria-label') !== 'Close') ?? ref.current)?.focus(), 0)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      clearTimeout(t)
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+      if (opener?.isConnected) opener.focus()
+    }
+  }, [open])
 
   return (
     <AnimatePresence>
@@ -147,14 +178,17 @@ export function Modal({
             ref={ref}
             role="dialog"
             aria-modal="true"
-            aria-label={title}
-            className="card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl"
+            aria-labelledby="modal-title"
+            tabIndex={-1}
+            className="card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl outline-none"
             initial={{ y: 16, scale: 0.98 }}
             animate={{ y: 0, scale: 1 }}
             exit={{ y: 16, scale: 0.98 }}
           >
             <div className="mb-4 flex items-start justify-between gap-4">
-              <h2 className="font-display text-xl font-semibold">{title}</h2>
+              <h2 id="modal-title" className="font-display text-xl font-semibold">
+                {title}
+              </h2>
               <button type="button" aria-label="Close" onClick={onClose} className="rounded p-1 text-muted hover:text-ink">
                 <X className="size-5" />
               </button>

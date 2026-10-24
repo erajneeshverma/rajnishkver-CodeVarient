@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import { useTitle } from '../lib/useTitle'
 import { Ghost, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Intro } from '../components/Intro'
 import { Tombstone } from '../components/Tombstone'
@@ -21,37 +21,31 @@ export function ArchivePage() {
   const [cause, setCause] = useState('all')
   const [sort, setSort] = useState<Sort>('buried')
 
-  const withStatus = useMemo(() => projects.map((p) => ({ p, status: effectiveStatus(p) })), [projects])
-  const counts = useMemo(() => {
-    const c: Record<string, number> = {}
-    for (const { status } of withStatus) c[status] = (c[status] ?? 0) + 1
-    return c
-  }, [withStatus])
+  const withStatus = projects.map((p) => ({ p, status: effectiveStatus(p) }))
+  const countOf = (s: StatusId) => withStatus.filter((x) => x.status === s).length
   const haunting = withStatus.filter((x) => x.status === 'haunting').map((x) => x.p)
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return withStatus
-      .filter(({ p, status: s }) => {
-        if (status !== 'all' && s !== status) return false
-        if (cause !== 'all' && p.cause !== cause) return false
-        if (!q) return true
-        return [p.name, p.description, p.goal, p.causeNote, ...p.stack].join(' ').toLowerCase().includes(q)
-      })
-      .map((x) => x.p)
-      .sort((a, b) => {
-        switch (sort) {
-          case 'name':
-            return a.name.localeCompare(b.name)
-          case 'completion':
-            return b.completion - a.completion
-          case 'touched':
-            return b.lastTouchedAt.localeCompare(a.lastTouchedAt)
-          default:
-            return b.buriedAt.localeCompare(a.buriedAt)
-        }
-      })
-  }, [withStatus, query, status, cause, sort])
+  const q = query.trim().toLowerCase()
+  const visible = withStatus
+    .filter(({ p, status: s }) => {
+      if (status !== 'all' && s !== status) return false
+      if (cause !== 'all' && p.cause !== cause) return false
+      if (!q) return true
+      return [p.name, p.description, p.goal, p.causeNote, ...p.stack].join(' ').toLowerCase().includes(q)
+    })
+    .map((x) => x.p)
+    .toSorted((a, b) => {
+      switch (sort) {
+        case 'name':
+          return a.name.localeCompare(b.name)
+        case 'completion':
+          return b.completion - a.completion
+        case 'touched':
+          return b.lastTouchedAt.localeCompare(a.lastTouchedAt)
+        default:
+          return b.buriedAt.localeCompare(a.buriedAt)
+      }
+    })
 
   return (
     <div>
@@ -89,7 +83,7 @@ export function ArchivePage() {
             key={s.id}
             label={s.label}
             dot={s.dot}
-            count={counts[s.id] ?? 0}
+            count={countOf(s.id)}
             active={status === s.id}
             onClick={() => setStatus(status === s.id ? 'all' : s.id)}
           />

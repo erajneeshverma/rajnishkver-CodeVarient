@@ -21,7 +21,7 @@ const icons: Record<EventType, { icon: ComponentType<{ className?: string }>; co
 }
 
 export function Timeline({ project }: { project: Project }) {
-  const { logEvent, removeEvent } = useGraveyard()
+  const { logEvent, removeEvent, restoreEvent } = useGraveyard()
   const [text, setText] = useState('')
   const [type, setType] = useState<'milestone' | 'note'>('milestone')
   const [date, setDate] = useState(todayISO())
@@ -88,8 +88,10 @@ export function Timeline({ project }: { project: Project }) {
         accepts={(p) => p.kind === 'event' && p.id === project.id}
         onDrop={(p) => {
           if (p.kind !== 'event') return
+          const ev = project.events.find((e) => e.id === p.eventId)
+          if (!ev) return
           removeEvent(project.id, p.eventId)
-          toast('🧽 Timeline entry erased.')
+          toast('🧽 Timeline entry erased.', { label: 'Undo', run: () => restoreEvent(project.id, ev) })
         }}
       />
 

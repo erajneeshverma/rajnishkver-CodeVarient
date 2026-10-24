@@ -13,13 +13,15 @@ import { ProjectChip } from './ProjectChip'
  * Canvas Protocol: the project card sits on the left, the five revival paths are
  * drop zones on the right, ranked by the advisor. Dropping the card decides its fate.
  */
-export function Advisor({ project }: { project: Project }) {
+export function Advisor({ project, onBeforeDecide }: { project: Project; onBeforeDecide?: () => void }) {
   const advice = useMemo(() => advise(project, appConfig), [project])
   const top = advice[0].path
   const decide = useGraveyard((s) => s.decide)
 
   const choose = (path: PathId) => {
     const cfg = paths.find((p) => p.id === path)!
+    // The advice shown may come from unsaved answers; record them with the decision.
+    onBeforeDecide?.()
     decide(project.id, { path, suggested: top, nextSteps: cfg.nextSteps, epitaph: cfg.resultStatus === 'rip' ? '' : undefined })
     toast(
       cfg.resultStatus === 'rip'

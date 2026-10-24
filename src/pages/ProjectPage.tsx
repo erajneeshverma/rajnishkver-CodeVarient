@@ -6,13 +6,13 @@ import { Advisor } from '../components/Advisor'
 import { ProjectChip } from '../components/ProjectChip'
 import { Timeline } from '../components/Timeline'
 import { Empty, InterestPicker, Progress, RelevancePicker, Section, StatusBadge } from '../components/ui'
-import { causes, hauntOptions, paths, salvageKinds } from '../config'
+import { causes, hauntOptions, paths, relevanceOptions, salvageKinds } from '../config'
 import { downloadMarkdown } from '../lib/postmortem'
 import { useTitle } from '../lib/useTitle'
 import { cx, effectiveStatus, formatDate, relativeTime } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
-import type { Project, SalvageKind } from '../types'
+import type { Project, Relevance, SalvageKind } from '../types'
 import { NotFound } from './NotFound'
 
 export function ProjectPage() {
@@ -26,6 +26,25 @@ export function ProjectPage() {
   }, [hash])
 
   if (!project) return <NotFound />
+  return <ProjectView key={project.id} project={project} />
+}
+
+type AssessmentDraft = { interest: number; relevance: Relevance }
+
+function ProjectView({ project }: { project: Project }) {
+  // Unsaved answers preview the advice live; dragging the assessment card records them.
+  const [draft, setDraft] = useState<AssessmentDraft | null>(null)
+  const assess = useGraveyard((s) => s.assess)
+  const current = draft ?? project.assessment
+  const dirty = Boolean(draft && (draft.interest !== project.assessment.interest || draft.relevance !== project.assessment.relevance))
+  const preview: Project = dirty ? { ...project, assessment: { ...project.assessment, ...draft! } } : project
+  const changeDraft = (next: AssessmentDraft) => setDraft(next)
+  const record = () => {
+    if (!dirty) return
+    assess(project.id, draft!.interest, draft!.relevance)
+    setDraft(null)
+  }
+  const assessment = { value: current, dirty, onChange: changeDraft, onRecord: record, onDiscard: () => setDraft(null) }
 
   const status = effectiveStatus(project)
   const cause = causes.find((c) => c.id === project.cause)
@@ -107,11 +126,16 @@ export function ProjectPage() {
           </Section>
 
           {/* On phones the sidebar sits far below, so the live assessment comes right before the advice. */}
-          <Assessment project={project} className="lg:hidden" />
+          <Assessment {...assessment} project={project} instance="inline" className="lg:hidden" />
 
           <div id="advisor" className="scroll-mt-24">
             <Section title={project.decision ? 'Revival Advisor (change your mind any time)' : 'Revival Advisor'}>
-              <Advisor project={project} />
+              {dirty && (
+                <p className="mb-3 rounded-lg bg-violet-500/10 px-3 py-2 text-xs text-violet-800 dark:text-violet-300">
+                  Previewing your new answers. Drag the assessment card into “Record revisit” to keep them. Choosing a path records them too.
+                </p>
+              )}
+              <Advisor project={preview} onBeforeDecide={record} />
             </Section>
           </div>
 
@@ -121,7 +145,7 @@ export function ProjectPage() {
         </div>
 
         <aside className="min-w-0 space-y-6">
-          <Assessment project={project} className="hidden lg:block" />
+          <Assessment {...assessment} project={project} instance="side" className="hidden lg:block" />
           <SalvagePanel project={project} />
         </aside>
       </div>
@@ -308,22 +332,73 @@ function Detail({ label, value, wide }: { label: string; value: string; wide?: b
   )
 }
 
-/** Changing either answer re-ranks the advice immediately; no submit step. */
-function Assessment({ project, className }: { project: Project; className?: string }) {
-  const assess = useGraveyard((s) => s.assess)
-  const { interest, relevance } = project.assessment
+/** Pick new answers to preview the advice; drag the assessment card into a zone to record or drop them. */
+function Assessment({
+  project,
+  value,
+  dirty,
+  onChange,
+  onRecord,
+  onDiscard,
+  instance,
+  className,
+}: {
+  project: Project
+  value: AssessmentDraft
+  dirty: boolean
+  onChange: (v: AssessmentDraft) => void
+  onRecord: () => void
+  onDiscard: () => void
+  instance: string
+  className?: string
+}) {
+  const relevanceLabel = relevanceOptions.find((r) => r.id === value.relevance)?.label
   return (
     <Section title="Today’s assessment" className={className}>
       <div className="space-y-4">
         <div>
           <span className="label">Interest today</span>
-          <InterestPicker value={interest} onChange={(v) => assess(project.id, v, relevance)} />
+          <InterestPicker value={value.interest} onChange={(v) => onChange({ ...value, interest: v })} />
         </div>
         <div>
           <span className="label">Still relevant?</span>
-          <RelevancePicker value={relevance} onChange={(v) => assess(project.id, interest, v)} />
+          <RelevancePicker value={value.relevance} onChange={(v) => onChange({ ...value, relevance: v })} />
         </div>
-        <p className="text-xs text-muted">Changes re-rank the advice instantly. Last assessed {formatDate(project.assessment.assessedAt)}.</p>
+        {dirty ? (
+          <div className="space-y-2 border-t border-line pt-4">
+            <DataCard id={`assessment-${instance}`} payload={{ kind: 'assessment', id: project.id }} label={`Assessment: interest ${value.interest} of 5, ${relevanceLabel}`}>
+              <div className="rounded-lg border border-violet-500/60 bg-surface p-2.5 pr-8 text-sm shadow-sm">
+                <span className="block text-xs text-muted">New assessment</span>
+                {'🕯️'.repeat(value.interest)} · {relevanceLabel}
+              </div>
+            </DataCard>
+            <div className="grid grid-cols-2 gap-2">
+              <ActionZone
+                id={`record-${instance}`}
+                label="Record revisit"
+                icon="📝"
+                tone="violet"
+                className="py-2"
+                accepts={(p) => p.kind === 'assessment' && p.id === project.id}
+                onDrop={() => {
+                  onRecord()
+                  toast('📝 Revisit recorded. The advice now uses your new answers.')
+                }}
+              />
+              <ActionZone
+                id={`discard-assessment-${instance}`}
+                label="Keep my old answers"
+                icon="↩️"
+                tone="neutral"
+                className="py-2"
+                accepts={(p) => p.kind === 'assessment' && p.id === project.id}
+                onDrop={onDiscard}
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted">Change an answer to preview how the advice shifts. Last assessed {formatDate(project.assessment.assessedAt)}.</p>
+        )}
       </div>
     </Section>
   )
@@ -331,7 +406,7 @@ function Assessment({ project, className }: { project: Project; className?: stri
 
 /** Type a part, then drag its card into the bin. Drag an existing part to the scrap zone to remove it. */
 function SalvagePanel({ project }: { project: Project }) {
-  const { addSalvage, removeSalvage } = useGraveyard()
+  const { addSalvage, removeSalvage, restoreSalvage } = useGraveyard()
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
   const [kind, setKind] = useState<SalvageKind>('component')
@@ -396,9 +471,11 @@ function SalvagePanel({ project }: { project: Project }) {
           accepts={(p) => p.kind === 'salvage' && p.id === project.id}
           onDrop={(p) => {
             if (p.kind !== 'salvage') return
-            const item = project.salvage.find((x) => x.id === p.itemId)
+            const index = project.salvage.findIndex((x) => x.id === p.itemId)
+            const item = project.salvage[index]
+            if (!item) return
             removeSalvage(project.id, p.itemId)
-            toast(`🗑️ Scrapped “${item?.title ?? 'part'}”.`)
+            toast(`🗑️ Scrapped “${item.title}”.`, { label: 'Undo', run: () => restoreSalvage(project.id, item, index) })
           }}
         />
       )}

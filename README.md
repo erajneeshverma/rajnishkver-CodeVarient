@@ -25,15 +25,19 @@ data card into an action zone.** The product didn't change; the interaction did.
 | Salvage a part | "Salvage it" button | the **new part card** | **the salvage bin**; drag a part to **Scrap** to remove it |
 | Timeline entry | "Add" button | the **new entry card** | **the timeline**; drag an entry to **Erase** to remove it |
 | Backup, reset, clear | buttons + confirm | the **graveyard card** | **Export JSON**, **Load demo**, **Empty** (with *Undo*) |
-| Import a backup | file button | a **.json file** from your desktop | **Import JSON** |
+| Import a backup | file button | a **.json file** from your desktop, or the **file card** made by choosing one | **Import JSON** |
 
-Things that aren't actions just work directly: reassessing re-ranks the advice live, next steps and epitaphs save as
-you type, and GitHub import starts by itself when you paste a repo URL.
+| Record a revisit | "Update advice" button | the **assessment card** (the pickers only preview the advice) | **Record revisit** or **Keep my old answers** |
+| Remove a stack tag | × button | the **tag chip** | the **bin** |
+
+Everything destructive can be undone from its toast. Typing needs no drag: next steps and epitaphs save as you type,
+and GitHub import starts by itself when you paste a repo URL.
 
 - **Mouse and touch:** pick up a card and drop it on a zone. Zones light up when they can take the card, and
   dropping on empty canvas does nothing.
-- **Keyboard:** focus a card (or a tombstone's grip), press **Space**, use the **arrow keys** to jump between zones,
-  then **Space** to drop or **Esc** to cancel. A screen reader announces every step.
+- **Keyboard:** focus a card (or a tombstone's grip), press **Space**, use the **arrow keys** to jump between zones
+  (off-screen zones scroll into view), then **Space** to drop or **Esc** to cancel. Picking a card up and putting it
+  down without moving does nothing. A screen reader announces every step.
 - **Built on** [`src/canvas/Canvas.tsx`](src/canvas/Canvas.tsx): one `DataCard`, one `ActionZone` and a provider
   (dnd-kit) that every screen reuses. Zero axe-core violations on every page in both themes.
 

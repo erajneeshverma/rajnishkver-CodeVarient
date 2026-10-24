@@ -32,7 +32,8 @@ everyone sees the same graveyard.
 
 - The project card sits on the left. The five paths are **drop zones**, ranked, each with its fit % and the
   **reasons** for and against ("+3 Scope creep killed it, and a clean slate fixes that").
-- Change **Interest today** to 1 and **Still relevant?** to *No*. The ranking changes instantly; there's no submit.
+- Change **Interest today** to 1 and **Still relevant?** to *No*. The advice previews the new ranking instantly. Drag
+  the **assessment card** into **Record revisit** to keep it.
 - Drag the card onto **Restart** anyway. The decision card appears with editable next steps, and the timeline notes
   that you overrode the advisor.
 - Drag the decision card onto **Dig it back up** to reconsider.

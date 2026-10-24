@@ -1,5 +1,5 @@
 import { useTitle } from '../lib/useTitle'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActionZone, DataCard, type Payload } from '../canvas/Canvas'
 import { Section } from '../components/ui'
 import { causes, paths, rules, type Condition } from '../config'
@@ -98,6 +98,18 @@ function DataTools() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [msg, setMsg] = useState('')
   const [fileOver, setFileOver] = useState(false)
+  const [pending, setPending] = useState<File | null>(null)
+
+  // A file dropped just outside the zone must not make the browser open it instead of the app.
+  useEffect(() => {
+    const stop = (e: DragEvent) => e.dataTransfer?.types.includes('Files') && e.preventDefault()
+    window.addEventListener('dragover', stop)
+    window.addEventListener('drop', stop)
+    return () => {
+      window.removeEventListener('dragover', stop)
+      window.removeEventListener('drop', stop)
+    }
+  }, [])
   const plural = (n: number) => `${n} project${n === 1 ? '' : 's'}`
 
   const importJson = async (file: File) => {
@@ -165,45 +177,64 @@ function DataTools() {
             accepts={isGraveyard}
             onDrop={() => replaceWith(clearAll, '🧹 The graveyard is empty.')}
           />
-          {/* Files come from the desktop, so this zone takes a native file drop. */}
-          <label
-            htmlFor="import-file"
-            data-zone="import"
+          {/* Import takes a file card (chosen below) or a file dragged straight from the desktop. */}
+          <div
             onDragOver={(e) => {
               e.preventDefault()
               setFileOver(true)
             }}
-            onDragLeave={() => setFileOver(false)}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFileOver(false)
+            }}
             onDrop={(e) => {
               e.preventDefault()
               setFileOver(false)
               const file = e.dataTransfer.files[0]
               if (file) importJson(file)
             }}
-            className={cx(
-              'block cursor-pointer rounded-xl border-2 border-dashed p-3 transition',
-              fileOver ? 'scale-[1.02] border-emerald-500 bg-emerald-500/15 ring-2 ring-emerald-500' : 'border-emerald-500/30 hover:border-emerald-500/60',
-            )}
           >
-            <span className="flex items-center gap-2 font-medium">
-              <span aria-hidden>📥</span> Import JSON
-            </span>
-            <span className="mt-0.5 block text-xs text-muted">{fileOver ? 'Release to import' : 'Drop a backup file here (or press to browse)'}</span>
-            <input
-              id="import-file"
-              ref={fileRef}
-              type="file"
-              accept="application/json,.json"
-              className="sr-only"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                // Reset so picking the same file again still fires a change.
-                e.target.value = ''
-                if (file) importJson(file)
+            <ActionZone
+              id="import"
+              label="Import JSON"
+              icon="📥"
+              tone="emerald"
+              hint={fileOver ? 'Release to import' : 'Drop a backup file or file card here'}
+              className={cx('h-full', fileOver && 'scale-[1.02] border-emerald-500 bg-emerald-500/15 ring-2 ring-emerald-500')}
+              accepts={(p) => p.kind === 'backup-file' && pending !== null}
+              onDrop={() => {
+                if (pending) importJson(pending)
+                setPending(null)
               }}
             />
-          </label>
+          </div>
         </div>
+      </div>
+      <div className="mt-4 flex flex-col gap-2 border-t border-line pt-4 sm:flex-row sm:items-center">
+        <label htmlFor="import-file" className="cursor-pointer text-xs text-muted underline-offset-2 hover:text-ink hover:underline">
+          No file manager handy? Choose a backup file to get its card →
+        </label>
+        <input
+          id="import-file"
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="sr-only"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            // Reset so picking the same file again still fires a change.
+            e.target.value = ''
+            if (file) setPending(file)
+          }}
+        />
+        {pending && (
+          <DataCard id="backup-file" payload={{ kind: 'backup-file' }} label={`Backup file ${pending.name}`} className="sm:ml-auto">
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/60 bg-surface p-2.5 pr-8 text-sm shadow-sm">
+              <span aria-hidden>🗂️</span>
+              <span className="truncate">{pending.name}</span>
+              <span className="shrink-0 text-xs text-muted">{Math.max(1, Math.round(pending.size / 1024))} KB</span>
+            </div>
+          </DataCard>
+        )}
       </div>
       {msg && (
         <p role="status" className="mt-3 text-xs text-muted">

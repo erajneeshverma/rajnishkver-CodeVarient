@@ -26,8 +26,10 @@ interface GraveyardState {
   clearHaunt: (id: string) => void
   logEvent: (id: string, type: EventType, text: string, at?: string) => void
   removeEvent: (id: string, eventId: string) => void
+  restoreEvent: (id: string, event: TimelineEvent) => void
   addSalvage: (id: string, item: Omit<SalvageItem, 'id'>) => void
   removeSalvage: (id: string, itemId: string) => void
+  restoreSalvage: (id: string, item: SalvageItem, index: number) => void
 
   saveDraft: (draft: Partial<ProjectDraft>) => void
   clearDraft: () => void
@@ -101,6 +103,8 @@ export const useGraveyard = create<GraveyardState>()(
 
         restore: (project, index) =>
           set((s) => {
+            // Undo can only bring a project back once.
+            if (s.projects.some((p) => p.id === project.id)) return s
             const projects = [...s.projects]
             projects.splice(Math.min(index, projects.length), 0, project)
             return { projects }
@@ -168,6 +172,8 @@ export const useGraveyard = create<GraveyardState>()(
 
         removeEvent: (id, eventId) => update(id, (p) => ({ ...p, events: p.events.filter((e) => e.id !== eventId) })),
 
+        restoreEvent: (id, ev) => update(id, (p) => (p.events.some((e) => e.id === ev.id) ? p : { ...p, events: [...p.events, ev] })),
+
         addSalvage: (id, item) =>
           update(id, (p) => ({
             ...p,
@@ -176,6 +182,14 @@ export const useGraveyard = create<GraveyardState>()(
           })),
 
         removeSalvage: (id, itemId) => update(id, (p) => ({ ...p, salvage: p.salvage.filter((x) => x.id !== itemId) })),
+
+        restoreSalvage: (id, item, index) =>
+          update(id, (p) => {
+            if (p.salvage.some((x) => x.id === item.id)) return p
+            const salvage = [...p.salvage]
+            salvage.splice(Math.min(index, salvage.length), 0, item)
+            return { ...p, salvage }
+          }),
 
         saveDraft: (draft) => set({ draft }),
         clearDraft: () => set({ draft: null }),

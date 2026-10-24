@@ -24,8 +24,10 @@ export function Toaster() {
                 type="button"
                 className="pointer-events-auto font-medium text-lantern hover:underline"
                 onClick={() => {
-                  t.action!.run()
+                  // Run once, even if clicked again while the toast animates out.
+                  if (!useToast.getState().toasts.some((x) => x.id === t.id)) return
                   dismiss(t.id)
+                  t.action!.run()
                 }}
               >
                 {t.action.label}

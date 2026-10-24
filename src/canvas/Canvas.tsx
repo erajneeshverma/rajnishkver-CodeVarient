@@ -4,7 +4,6 @@
  * it up, arrow keys to jump between zones, Space to drop, Esc to cancel).
  */
 import {
-  closestCenter,
   DndContext,
   DragOverlay,
   KeyboardSensor,
@@ -37,6 +36,9 @@ export type Payload =
   | { kind: 'new-event'; id: string }
   | { kind: 'event'; id: string; eventId: string }
   | { kind: 'graveyard' }
+  | { kind: 'assessment'; id: string }
+  | { kind: 'backup-file' }
+  | { kind: 'tag'; value: string }
 
 interface CardData {
   payload: Payload
@@ -52,11 +54,26 @@ interface ZoneData {
 
 /**
  * Mouse and touch: only the zone actually under the pointer counts, so dropping on
- * empty canvas does nothing. Keyboard drags have no pointer, so use the nearest zone.
+ * empty canvas does nothing. Keyboard: only the zone the card has been moved onto
+ * (by the arrow keys) counts, so picking a card up and putting it down does nothing.
  */
-const collision: CollisionDetection = (args) => (args.pointerCoordinates ? pointerWithin(args) : closestCenter(args))
+const collision: CollisionDetection = (args) => {
+  if (args.pointerCoordinates) return pointerWithin(args)
+  const { collisionRect: r, droppableRects } = args
+  const cx = r.left + r.width / 2
+  const cy = r.top + r.height / 2
+  return args.droppableContainers
+    .filter((c) => {
+      const z = droppableRects.get(c.id)
+      return z && cx >= z.left && cx <= z.left + z.width && cy >= z.top && cy <= z.top + z.height
+    })
+    .map((c) => ({ id: c.id, data: { droppableContainer: c, value: 0 } }))
+}
 
-/** Arrow keys jump straight to the next enabled zone instead of nudging pixels. */
+/**
+ * Arrow keys jump straight to the next enabled zone instead of nudging pixels.
+ * The target zone is scrolled into view first, so the card never moves off-screen.
+ */
 const jumpBetweenZones: KeyboardCoordinateGetter = (event, { context }) => {
   const keys = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']
   if (!keys.includes(event.code)) return undefined
@@ -70,10 +87,12 @@ const jumpBetweenZones: KeyboardCoordinateGetter = (event, { context }) => {
   const forward = event.code === 'ArrowRight' || event.code === 'ArrowDown'
   const current = zones.findIndex((z) => z.id === context.over?.id)
   const next = zones[current === -1 ? (forward ? 0 : zones.length - 1) : (current + (forward ? 1 : -1) + zones.length) % zones.length]
-  const active = context.active ? context.collisionRect : null
-  const w = active?.width ?? 0
-  const h = active?.height ?? 0
-  return { x: next.rect.left + next.rect.width / 2 - w / 2, y: next.rect.top + next.rect.height / 2 - h / 2 }
+  const node = context.droppableContainers.get(next.id)?.node.current
+  node?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  const rect = node?.getBoundingClientRect() ?? next.rect
+  const w = context.collisionRect?.width ?? 0
+  const h = context.collisionRect?.height ?? 0
+  return { x: rect.left + rect.width / 2 - w / 2, y: rect.top + Math.min(rect.height / 2, 28) - h / 2 }
 }
 
 export function CanvasProvider({ children }: { children: ReactNode }) {
@@ -81,7 +100,11 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: jumpBetweenZones }),
+    // Tab must not drop the card; only Space or Enter does.
+    useSensor(KeyboardSensor, {
+      coordinateGetter: jumpBetweenZones,
+      keyboardCodes: { start: ['Space', 'Enter'], cancel: ['Escape'], end: ['Space', 'Enter'] },
+    }),
   )
 
   const name = (id: unknown, data: unknown) => (data as CardData | ZoneData | undefined)?.label ?? String(id)
@@ -153,7 +176,7 @@ export function DataCard({
   handle?: boolean
 }) {
   const render = preview ?? (() => <div className={cx('card p-4', className)}>{children}</div>)
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, data: { payload, label, preview: render } satisfies CardData })
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({ id, data: { payload, label, preview: render } satisfies CardData })
   return (
     <div
       ref={setNodeRef}
@@ -162,7 +185,7 @@ export function DataCard({
       {...(handle ? {} : attributes)}
       data-card={label}
       className={cx(
-        'group relative cursor-grab touch-manipulation select-none outline-none transition',
+        'group relative cursor-grab touch-manipulation select-none outline-none transition [-webkit-touch-callout:none]',
         !handle && 'focus-visible:ring-2 focus-visible:ring-lantern',
         isDragging && 'opacity-30',
         className,
@@ -170,6 +193,7 @@ export function DataCard({
     >
       {handle ? (
         <span
+          ref={setActivatorNodeRef}
           {...attributes}
           aria-label={`Move ${label}`}
           className="absolute right-2 top-2 z-10 grid size-7 place-items-center rounded-md text-muted opacity-60 outline-none transition hover:bg-surface-2 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-lantern"

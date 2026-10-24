@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, FolderGit2, Loader2, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, FolderGit2, Loader2, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CausePicker, InterestPicker, RelevancePicker } from '../components/ui'
@@ -261,12 +261,20 @@ function BuryForm() {
                   hint="Start over with an empty form"
                   accepts={(p) => p.kind === 'draft'}
                   onDrop={() => {
+                    const previous = d
                     clearDraft()
                     setD(blank())
                     setTouched(false)
                     setFormKey((k) => k + 1)
                     setStep(0)
-                    toast('🗑️ Draft discarded.')
+                    toast('🗑️ Draft discarded.', {
+                      label: 'Undo',
+                      run: () => {
+                        setD(previous)
+                        setFormKey((k) => k + 1)
+                        setStep(2)
+                      },
+                    })
                   }}
                 />
               )}
@@ -377,12 +385,8 @@ function TombstoneStep({
             placeholder="Paste github.com/owner/repo and it imports itself"
             value={repo}
             onChange={(e) => setRepo(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                runImport()
-              }
-            }}
+            // Enter shouldn't jump to the next step from here; import starts on its own.
+            onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
           />
           {loading && <Loader2 aria-label="Importing" className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted" />}
         </div>
@@ -448,16 +452,14 @@ function TombstoneStep({
       </div>
       <div>
         <label className="label" htmlFor="stack">
-          Stack <span className="font-normal text-muted">(press Enter to add)</span>
+          Stack <span className="font-normal text-muted">(type and press Enter; drag a tag to the bin to remove it)</span>
         </label>
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface p-2 focus-within:border-lantern">
+        <div className="flex items-stretch gap-2">
+        <div className="flex flex-1 flex-wrap items-center gap-2 rounded-lg border border-line bg-surface p-2 focus-within:border-lantern">
           {d.stack.map((s) => (
-            <span key={s} className="inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-xs">
-              {s}
-              <button type="button" aria-label={`Remove ${s}`} onClick={() => set('stack', d.stack.filter((x) => x !== s))}>
-                <X className="size-3" />
-              </button>
-            </span>
+            <DataCard key={s} id={`tag-${s}`} payload={{ kind: 'tag', value: s }} label={`Tag ${s}`} hint={false}>
+              <span className="inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-xs">{s}</span>
+            </DataCard>
           ))}
           <input
             id="stack"
@@ -473,6 +475,18 @@ function TombstoneStep({
             }}
             onBlur={addTag}
           />
+        </div>
+        {d.stack.length > 0 && (
+          <ActionZone
+            id="tag-bin"
+            label="Bin"
+            icon="🗑️"
+            tone="danger"
+            className="grid place-items-center px-3 py-1"
+            accepts={(p) => p.kind === 'tag'}
+            onDrop={(p) => p.kind === 'tag' && set('stack', d.stack.filter((x) => x !== p.value))}
+          />
+        )}
         </div>
       </div>
     </>

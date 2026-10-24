@@ -1,6 +1,4 @@
-import { AnimatePresence, m } from 'framer-motion'
-import { X } from 'lucide-react'
-import { useEffect, useRef, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { causes, relevanceOptions } from '../config'
 import { cx, statusConfig } from '../lib/util'
 import type { Relevance, StatusId } from '../types'
@@ -110,94 +108,6 @@ export function CausePicker({ value, onChange }: { value: string; onChange: (v: 
         </button>
       ))}
     </div>
-  )
-}
-
-export function Modal({
-  open,
-  onClose,
-  title,
-  children,
-}: {
-  open: boolean
-  onClose: () => void
-  title: string
-  children: ReactNode
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const onCloseRef = useRef(onClose)
-  useEffect(() => {
-    onCloseRef.current = onClose
-  })
-
-  useEffect(() => {
-    if (!open) return
-    // Remember what had focus so it gets it back when the dialog closes.
-    const opener = document.activeElement as HTMLElement | null
-    const focusables = () =>
-      [...(ref.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])') ?? [])]
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') return onCloseRef.current()
-      if (e.key !== 'Tab') return
-      const els = focusables()
-      if (!els.length) return
-      const first = els[0]
-      const last = els[els.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    const t = setTimeout(() => (focusables().find((el) => el.getAttribute('aria-label') !== 'Close') ?? ref.current)?.focus(), 0)
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      clearTimeout(t)
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prevOverflow
-      if (opener?.isConnected) opener.focus()
-    }
-  }, [open])
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <m.div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onMouseDown={(e) => e.target === e.currentTarget && onClose()}
-        >
-          <m.div
-            ref={ref}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-            tabIndex={-1}
-            className="card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl outline-none"
-            initial={{ y: 16, scale: 0.98 }}
-            animate={{ y: 0, scale: 1 }}
-            exit={{ y: 16, scale: 0.98 }}
-          >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <h2 id="modal-title" className="font-display text-xl font-semibold">
-                {title}
-              </h2>
-              <button type="button" aria-label="Close" onClick={onClose} className="rounded p-1 text-muted hover:text-ink">
-                <X className="size-5" />
-              </button>
-            </div>
-            {children}
-          </m.div>
-        </m.div>
-      )}
-    </AnimatePresence>
   )
 }
 

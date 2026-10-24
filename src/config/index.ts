@@ -184,6 +184,7 @@ export const rules: Rule[] = [
   { path: 'continue', when: [{ signal: 'relevance', op: 'is', value: 'no' }], weight: -3, why: 'The original idea is no longer relevant.' },
   { path: 'continue', when: [{ signal: 'cause', op: 'in', value: ['scope', 'debt'] }], weight: -2, why: '{cause} killed it, and continuing keeps that problem.' },
   { path: 'continue', when: [{ signal: 'monthsIdle', op: '>', value: 18 }], weight: -1, why: 'Untouched for {months}, so dependencies have likely rotted.' },
+  { path: 'continue', when: [{ signal: 'cause', op: 'is', value: 'interest' }, { signal: 'interest', op: '<=', value: 3 }], weight: -2, why: 'You lost interest and it hasn’t come back ({interest}/5).' },
 
   // Restart
   { path: 'restart', when: [{ signal: 'cause', op: 'in', value: ['scope', 'debt'] }], weight: 3, why: '{cause} killed it, and a clean slate with a tighter scope fixes that.' },
@@ -193,6 +194,7 @@ export const rules: Rule[] = [
   { path: 'restart', when: [{ signal: 'completion', op: '<=', value: 50 }], weight: 1, why: 'At {completion}% done, not much work is thrown away.' },
   { path: 'restart', when: [{ signal: 'relevance', op: 'is', value: 'no' }], weight: -3, why: 'Restarting an idea that is no longer relevant repeats the mistake.' },
   { path: 'restart', when: [{ signal: 'completion', op: '>=', value: 80 }], weight: -2, why: 'It is {completion}% done, so restarting throws away real work.' },
+  { path: 'restart', when: [{ signal: 'cause', op: 'is', value: 'interest' }, { signal: 'interest', op: '<=', value: 3 }], weight: -3, why: 'You lost interest, and a fresh repo won’t bring it back on its own.' },
 
   // Change the idea
   { path: 'change', when: [{ signal: 'interest', op: '>=', value: 4 }], weight: 2, why: 'You still care about this space ({interest}/5).' },
@@ -213,6 +215,7 @@ export const rules: Rule[] = [
   { path: 'archive', when: [{ signal: 'interest', op: '<=', value: 2 }], weight: 2, why: 'Your interest is low ({interest}/5).' },
   { path: 'archive', when: [{ signal: 'relevance', op: 'is', value: 'no' }], weight: 3, why: 'The idea is no longer relevant.' },
   { path: 'archive', when: [{ signal: 'monthsIdle', op: '>', value: 12 }], weight: 1, why: 'Untouched for {months}.' },
+  { path: 'archive', when: [{ signal: 'cause', op: 'is', value: 'interest' }], weight: 2, why: 'The spark faded on its own; nothing outside was blocking it.' },
   { path: 'archive', when: [{ signal: 'salvageCount', op: '<', value: 1 }], weight: 1, why: 'Nothing is marked as worth salvaging.' },
   { path: 'archive', when: [{ signal: 'interest', op: '>=', value: 4 }], weight: -3, why: 'You still care about it ({interest}/5).' },
   { path: 'archive', when: [{ signal: 'completion', op: '>=', value: 70 }], weight: -1, why: 'It is {completion}% done, which is a lot to give up.' },

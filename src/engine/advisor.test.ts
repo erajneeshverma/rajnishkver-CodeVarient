@@ -71,3 +71,9 @@ describe('Revival Advisor', () => {
     expect(formatDuration(30)).toBe('2.5 years')
   })
 })
+
+describe('lost interest', () => {
+  it('does not suggest Restart when interest never came back', () => {
+    expect(top(project({ cause: 'interest', interest: 3, completion: 40 }))).not.toBe('restart')
+  })
+})

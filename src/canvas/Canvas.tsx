@@ -25,6 +25,8 @@ import {
 import { GripVertical } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { cx } from '../lib/util'
+import { useFx, type FxKind } from './fx'
+import { FxLayer } from './FxLayer'
 
 /** What is being dragged. */
 export type Payload =
@@ -46,11 +48,22 @@ interface CardData {
   preview: () => ReactNode
 }
 
+/** Where the dragged card ended up, in viewport coordinates (centre of the card). */
+export interface DropInfo {
+  x: number
+  y: number
+}
+
 interface ZoneData {
   label: string
   accepts: (p: Payload) => boolean
-  onDrop: (p: Payload) => void
+  onDrop: (p: Payload, info: DropInfo) => void
+  fx?: FxKind
+  /** Background zones (like an open field) lose to any zone layered on top of them. */
+  priority: number
 }
+
+const priorityOf = (c: { data: { current?: unknown } }) => ((c.data.current as ZoneData | undefined)?.priority ?? 0)
 
 /**
  * Mouse and touch: only the zone actually under the pointer counts, so dropping on
@@ -58,7 +71,13 @@ interface ZoneData {
  * (by the arrow keys) counts, so picking a card up and putting it down does nothing.
  */
 const collision: CollisionDetection = (args) => {
-  if (args.pointerCoordinates) return pointerWithin(args)
+  if (args.pointerCoordinates) {
+    const hits = pointerWithin(args)
+    if (hits.length < 2) return hits
+    // Nested zones: the most specific one wins over the field underneath.
+    const top = Math.max(...hits.map((h) => priorityOf(args.droppableContainers.find((c) => c.id === h.id)!)))
+    return hits.filter((h) => priorityOf(args.droppableContainers.find((c) => c.id === h.id)!) === top)
+  }
   const { collisionRect: r, droppableRects } = args
   const cx = r.left + r.width / 2
   const cy = r.top + r.height / 2
@@ -80,6 +99,7 @@ const jumpBetweenZones: KeyboardCoordinateGetter = (event, { context }) => {
   event.preventDefault()
   const zones = context.droppableContainers
     .getEnabled()
+    .filter((c) => priorityOf(c) >= 0)
     .map((c) => ({ id: c.id, rect: context.droppableRects.get(c.id) }))
     .filter((z): z is { id: typeof z.id; rect: NonNullable<typeof z.rect> } => Boolean(z.rect))
     .sort((a, b) => a.rect.top - b.rect.top || a.rect.left - b.rect.left)
@@ -122,7 +142,11 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
     setDragging(null)
     const card = e.active.data.current as CardData | undefined
     const zone = e.over?.data.current as ZoneData | undefined
-    if (card && zone?.accepts(card.payload)) zone.onDrop(card.payload)
+    if (!card || !zone?.accepts(card.payload)) return
+    const r = e.active.rect.current.translated
+    const info = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: innerWidth / 2, y: innerHeight / 2 }
+    zone.onDrop(card.payload, info)
+    if (zone.fx) useFx.getState().play(zone.fx, info.x, info.y)
   }
 
   return (
@@ -144,6 +168,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
         }}
       >
         {children}
+        <FxLayer />
         <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
           {dragging ? <div className="rotate-2 scale-105 cursor-grabbing shadow-2xl shadow-black/40">{dragging.preview()}</div> : null}
         </DragOverlay>
@@ -217,6 +242,8 @@ const tones = {
 }
 export type Tone = keyof typeof tones
 
+const toneFx: Record<Tone, FxKind> = { lantern: 'spark', danger: 'dust', violet: 'ghost', emerald: 'revive', neutral: 'ring' }
+
 /** A place to drop a card. It lights up while an acceptable card is being dragged. */
 export function ActionZone({
   id,
@@ -230,11 +257,14 @@ export function ActionZone({
   className,
   bare,
   overText,
+  fx,
+  priority = 0,
+  pulse,
 }: {
   id: string
   label: string
   accepts: (p: Payload) => boolean
-  onDrop: (p: Payload) => void
+  onDrop: (p: Payload, info: DropInfo) => void
   tone?: Tone
   icon?: ReactNode
   hint?: ReactNode
@@ -244,11 +274,17 @@ export function ActionZone({
   bare?: boolean
   /** Shown over a bare zone while a card hovers it */
   overText?: string
+  /** Effect played where the card lands; defaults from the tone */
+  fx?: FxKind | null
+  priority?: number
+  /** Draw attention while an acceptable card is being dragged (e.g. the advisor's pick) */
+  pulse?: boolean
 }) {
   const { active } = useDndContext()
   const payload = (active?.data.current as CardData | undefined)?.payload
   const ready = Boolean(payload && accepts(payload))
-  const { setNodeRef, isOver } = useDroppable({ id, disabled: Boolean(payload) && !ready, data: { label, accepts, onDrop } satisfies ZoneData })
+  const effect = fx === null ? undefined : (fx ?? toneFx[tone])
+  const { setNodeRef, isOver } = useDroppable({ id, disabled: Boolean(payload) && !ready, data: { label, accepts, onDrop, fx: effect, priority } satisfies ZoneData })
   const t = tones[tone]
   const over = isOver && ready
 
@@ -264,6 +300,7 @@ export function ActionZone({
         over ? t.over : ready ? t.ready : t.idle,
         payload && !ready && 'opacity-40',
         over && 'scale-[1.02]',
+        pulse && ready && !over && 'animate-pulse',
         className,
       )}
     >
@@ -281,7 +318,7 @@ export function ActionZone({
         </>
       )}
       {children}
-      {bare && over && (
+      {bare && over && overText !== '' && (
         <span className="pointer-events-none absolute inset-0 grid place-items-center rounded-xl bg-bg/60 text-sm font-semibold backdrop-blur-[1px]">
           {overText ?? `Release to drop into ${label}`}
         </span>

@@ -151,6 +151,7 @@ function DataTools() {
           <ActionZone
             id="export-json"
             label="Export JSON"
+            fx="paper"
             icon="💾"
             hint="Download a backup"
             accepts={isGraveyard}
@@ -162,6 +163,7 @@ function DataTools() {
           <ActionZone
             id="load-demo"
             label="Load demo projects"
+            fx="spark"
             icon="🎭"
             tone="violet"
             hint="Replaces what’s here (you can undo)"
@@ -196,6 +198,7 @@ function DataTools() {
             <ActionZone
               id="import"
               label="Import JSON"
+              fx="spark"
               icon="📥"
               tone="emerald"
               hint={fileOver ? 'Release to import' : 'Drop a backup file or file card here'}

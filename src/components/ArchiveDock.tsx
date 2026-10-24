@@ -41,6 +41,7 @@ export function ArchiveDock() {
         <ActionZone
           id="dock-export"
           label="Export post-mortem"
+          fx="paper"
           icon="📄"
           hint="Download Markdown"
           className="py-2"

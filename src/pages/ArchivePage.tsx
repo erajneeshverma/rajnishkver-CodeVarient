@@ -4,6 +4,7 @@ import { Ghost, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArchiveDock } from '../components/ArchiveDock'
+import { GraveyardCanvas } from '../components/GraveyardCanvas'
 import { Intro } from '../components/Intro'
 import { Tombstone } from '../components/Tombstone'
 import { Empty } from '../components/ui'
@@ -17,6 +18,8 @@ type Sort = 'buried' | 'touched' | 'completion' | 'name'
 export function ArchivePage() {
   useTitle()
   const projects = useGraveyard((s) => s.projects)
+  const view = useGraveyard((s) => s.view)
+  const setView = useGraveyard((s) => s.setView)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<StatusId | 'all'>('all')
   const [cause, setCause] = useState('all')
@@ -54,7 +57,7 @@ export function ArchivePage() {
         <h1 className="font-display text-3xl font-semibold sm:text-4xl">Your graveyard</h1>
         <p className="max-w-2xl text-muted">
           Every unfinished project, laid to rest with the story of why it stopped. Open one to hear what the Revival Advisor
-          thinks it deserves, or <strong className="text-ink">drag a tombstone onto an action</strong> at the bottom of the screen.
+          thinks it deserves, or <strong className="text-ink">drag a tombstone into one of the zones</strong> to act on it.
         </p>
       </div>
 
@@ -92,6 +95,20 @@ export function ArchivePage() {
       </div>
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+        <div role="radiogroup" aria-label="View" className="flex shrink-0 rounded-lg border border-line bg-surface p-1">
+          {(['canvas', 'grid'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={view === v}
+              onClick={() => setView(v)}
+              className={cx('rounded-md px-3 py-1 text-sm capitalize transition', view === v ? 'bg-surface-2 text-ink' : 'text-muted hover:text-ink')}
+            >
+              {v === 'canvas' ? '🪦 Canvas' : '▦ Grid'}
+            </button>
+          ))}
+        </div>
         <label className="relative flex-1">
           <span className="sr-only">Search projects</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
@@ -139,6 +156,8 @@ export function ArchivePage() {
           No projects match{status !== 'all' ? ` “${statusConfig(status).label}”` : ''}
           {query ? ` “${query}”` : ''}.
         </Empty>
+      ) : view === 'canvas' ? (
+        <GraveyardCanvas projects={visible} />
       ) : (
         <div className="grid gap-x-5 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="popLayout">
@@ -148,7 +167,7 @@ export function ArchivePage() {
           </AnimatePresence>
         </div>
       )}
-      {projects.length > 0 && <ArchiveDock />}
+      {projects.length > 0 && view === 'grid' && <ArchiveDock />}
     </div>
   )
 }

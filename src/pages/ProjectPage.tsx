@@ -218,6 +218,7 @@ function ActionCanvas({ project }: { project: Project }) {
             id="export"
             label="Export post-mortem"
             icon="📄"
+            fx="paper"
             hint="Download it as Markdown"
             accepts={isThis}
             onDrop={() => {
@@ -261,6 +262,7 @@ function DecisionCard({ project }: { project: Project }) {
           <ActionZone
             id="reconsider"
             label="Dig it back up"
+            fx="spark"
             icon="↩️"
             tone="neutral"
             hint="Drop the decision here to reconsider"

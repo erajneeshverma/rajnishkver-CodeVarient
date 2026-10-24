@@ -245,6 +245,7 @@ function BuryForm() {
             <div className="grid gap-2.5">
               <ActionZone
                 id="grave"
+                fx={editing ? 'spark' : 'rest'}
                 label={editing ? 'Update the tombstone' : 'The grave: lay it to rest'}
                 icon={editing ? '✏️' : '🪦'}
                 hint={editing ? 'Saves your changes' : 'Buries it and asks the Revival Advisor'}

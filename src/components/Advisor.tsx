@@ -88,6 +88,8 @@ function PathZone({
       id={`path-${advice.path}`}
       label={cfg.label}
       tone={cfg.resultStatus === 'rip' ? 'danger' : recommended ? 'lantern' : 'emerald'}
+      fx={cfg.resultStatus === 'rip' ? 'rest' : 'revive'}
+      pulse={recommended}
       accepts={(p) => p.kind === 'project' && p.id === projectId && !chosen}
       onDrop={onChoose}
       className={cx('p-0', recommended && 'bg-lantern-soft', chosen && 'border-solid')}

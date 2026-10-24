@@ -13,6 +13,10 @@ interface GraveyardState {
   draft: Partial<ProjectDraft> | null
   theme: Theme
   introSeen: boolean
+  /** Where each tombstone sits on the graveyard canvas, as fractions of the field */
+  positions: Record<string, { x: number; y: number }>
+  view: 'canvas' | 'grid'
+  hintsSeen: string[]
 
   bury: (draft: ProjectDraft) => string
   edit: (id: string, draft: ProjectDraft) => void
@@ -35,6 +39,11 @@ interface GraveyardState {
   clearDraft: () => void
   toggleTheme: () => void
   dismissIntro: () => void
+  place: (id: string, pos: { x: number; y: number }) => void
+  setView: (view: 'canvas' | 'grid') => void
+  seeHint: (key: string) => void
+  /** Put back an earlier copy of a project (used by undo) */
+  put: (project: Project) => void
   resetDemo: () => void
   clearAll: () => void
   replaceAll: (projects: Project[]) => void
@@ -65,6 +74,9 @@ export const useGraveyard = create<GraveyardState>()(
         draft: null,
         theme: 'dark',
         introSeen: false,
+        positions: {},
+        view: 'canvas',
+        hintsSeen: [],
 
         bury: (d) => {
           const id = uid()
@@ -195,6 +207,10 @@ export const useGraveyard = create<GraveyardState>()(
         clearDraft: () => set({ draft: null }),
         toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
         dismissIntro: () => set({ introSeen: true }),
+        place: (id, pos) => set((s) => ({ positions: { ...s.positions, [id]: pos } })),
+        setView: (view) => set({ view }),
+        seeHint: (key) => set((s) => (s.hintsSeen.includes(key) ? s : { hintsSeen: [...s.hintsSeen, key] })),
+        put: (project) => set((s) => ({ projects: s.projects.map((p) => (p.id === project.id ? project : p)) })),
         resetDemo: () => set({ projects: seedProjects() }),
         clearAll: () => set({ projects: [] }),
         replaceAll: (projects) => set({ projects }),
@@ -212,6 +228,9 @@ export const useGraveyard = create<GraveyardState>()(
           projects: Array.isArray(saved.projects)
             ? saved.projects.map(normalizeProject).filter((p): p is Project => p !== null)
             : current.projects,
+          positions: saved.positions && typeof saved.positions === 'object' ? saved.positions : {},
+          view: saved.view === 'grid' ? 'grid' : 'canvas',
+          hintsSeen: Array.isArray(saved.hintsSeen) ? saved.hintsSeen.filter((h) => typeof h === 'string') : [],
         }
       },
     },

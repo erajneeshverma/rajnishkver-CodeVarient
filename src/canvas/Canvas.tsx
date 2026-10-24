@@ -41,6 +41,7 @@ export type Payload =
   | { kind: 'assessment'; id: string }
   | { kind: 'backup-file' }
   | { kind: 'tag'; value: string }
+  | { kind: 'undo'; toast: number }
 
 interface CardData {
   payload: Payload

@@ -37,7 +37,7 @@ revival, dust for a burial, a ghost for a haunt), and every change can be undone
 | Record a revisit | "Update advice" button | the **assessment card** (the pickers only preview the advice) | **Record revisit** or **Keep my old answers** |
 | Remove a stack tag | × button | the **tag chip** | the **bin** |
 
-Everything destructive can be undone from its toast. Typing needs no drag: next steps and epitaphs save as you type,
+Everything destructive can be undone, also by drag and drop: drag the change's toast into the **Undo** zone. Typing needs no drag: next steps and epitaphs save as you type,
 and GitHub import starts by itself when you paste a repo URL.
 
 - **Mouse and touch:** pick up a card and drop it on a zone. Zones light up when they can take the card, and

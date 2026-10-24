@@ -5,10 +5,11 @@ import { CausePicker, InterestPicker, RelevancePicker } from '../components/ui'
 import { appConfig, paths, salvageKinds } from '../config'
 import { advise } from '../engine/advisor'
 import { importRepo } from '../lib/github'
-import { cx, todayISO, uid } from '../lib/util'
+import { cx, dateInputToISO, localDate, todayISO, uid } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
 import { useTitle } from '../lib/useTitle'
+import { NotFound } from './NotFound'
 import type { Project, ProjectDraft, SalvageKind } from '../types'
 
 const steps = [
@@ -44,8 +45,8 @@ const toDraft = (p: Project): ProjectDraft => ({
   completion: p.completion,
   stack: p.stack,
   repoUrl: p.repoUrl ?? '',
-  startedAt: p.startedAt.slice(0, 10),
-  lastTouchedAt: p.lastTouchedAt.slice(0, 10),
+  startedAt: localDate(p.startedAt),
+  lastTouchedAt: localDate(p.lastTouchedAt),
   cause: p.cause,
   causeNote: p.causeNote,
   interest: p.assessment.interest,
@@ -53,9 +54,16 @@ const toDraft = (p: Project): ProjectDraft => ({
   salvage: p.salvage,
 })
 
-const toISO = (d: string) => (d.length === 10 ? new Date(d + 'T12:00:00').toISOString() : d)
+const toISO = (d: string) => dateInputToISO(d)
 
 export function BuryPage() {
+  const { id } = useParams()
+  const existing = useProject(id)
+  if (id && !existing) return <NotFound />
+  return <BuryForm key={id ?? 'new'} />
+}
+
+function BuryForm() {
   const { id } = useParams()
   const existing = useProject(id)
   const editing = Boolean(existing)
@@ -67,6 +75,7 @@ export function BuryPage() {
   const [step, setStep] = useState(0)
   const [d, setD] = useState<ProjectDraft>(() => (existing ? toDraft(existing) : { ...blank(), ...savedDraft }))
   const [touched, setTouched] = useState(false)
+  const [formKey, setFormKey] = useState(0)
   const set = <K extends keyof ProjectDraft>(k: K, v: ProjectDraft[K]) => setD((prev) => ({ ...prev, [k]: v }))
 
   // Autosave new burials so a half-filled form is never lost.
@@ -78,11 +87,16 @@ export function BuryPage() {
     const e: Record<string, string> = {}
     if (!d.name.trim()) e.name = 'Give it a name for the tombstone.'
     if (!d.description.trim()) e.description = 'One line on what it was.'
-    if (d.lastTouchedAt < d.startedAt) e.lastTouchedAt = 'Last touched can’t be before it started.'
+    const today = todayISO()
+    if (!d.startedAt) e.startedAt = 'When did you start it?'
+    else if (d.startedAt > today) e.startedAt = 'That’s in the future.'
+    if (!d.lastTouchedAt) e.lastTouchedAt = 'When did you last work on it?'
+    else if (d.lastTouchedAt > today) e.lastTouchedAt = 'That’s in the future.'
+    else if (d.startedAt && d.lastTouchedAt < d.startedAt) e.lastTouchedAt = 'Last touched can’t be before it started.'
     if (!d.cause) e.cause = 'Pick the closest cause.'
     return e
   }, [d])
-  const stepFields = [['name', 'description', 'lastTouchedAt'], ['cause'], []]
+  const stepFields = [['name', 'description', 'startedAt', 'lastTouchedAt'], ['cause'], []]
   const stepValid = (i: number) => stepFields[i].every((f) => !errors[f])
 
   const next = () => {
@@ -152,7 +166,7 @@ export function BuryPage() {
           else submit()
         }}
       >
-        {step === 0 && <TombstoneStep d={d} set={set} setD={setD} errors={touched ? errors : {}} />}
+        {step === 0 && <TombstoneStep key={formKey} d={d} set={set} setD={setD} errors={touched ? errors : {}} />}
         {step === 1 && (
           <>
             <div>
@@ -211,6 +225,8 @@ export function BuryPage() {
               onClick={() => {
                 clearDraft()
                 setD(blank())
+                setTouched(false)
+                setFormKey((k) => k + 1)
               }}
             >
               Clear draft
@@ -348,7 +364,7 @@ function TombstoneStep({
         />
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Started">
+        <Field label="Started" error={errors.startedAt}>
           <input id="startedAt" type="date" className="field" value={d.startedAt} max={todayISO()} onChange={(e) => set('startedAt', e.target.value)} />
         </Field>
         <Field label="Last touched" error={errors.lastTouchedAt}>

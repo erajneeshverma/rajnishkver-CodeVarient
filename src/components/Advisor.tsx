@@ -13,6 +13,12 @@ export function Advisor({ project }: { project: Project }) {
   const advice = useMemo(() => advise(project, appConfig), [project])
   const top = advice[0]
   const [open, setOpen] = useState<PathId | null>(top.path)
+  // When a reassessment changes the top pick, open the new recommendation.
+  const [shownTop, setShownTop] = useState(top.path)
+  if (shownTop !== top.path) {
+    setShownTop(top.path)
+    setOpen(top.path)
+  }
   const [choosing, setChoosing] = useState<PathId | null>(null)
 
   return (

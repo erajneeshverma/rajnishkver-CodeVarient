@@ -3,7 +3,25 @@ import type { Project, StatusId } from '../types'
 
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
 
-export const todayISO = () => new Date().toISOString().slice(0, 10)
+/** YYYY-MM-DD in the viewer's own time zone (what a date input shows). */
+export function localDate(from: Date | string = new Date()): string {
+  const d = typeof from === 'string' ? new Date(from) : from
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+export const todayISO = () => localDate()
+
+/**
+ * A date input's YYYY-MM-DD as an ISO timestamp at local noon, never later than now,
+ * so a project "started today" always sorts before the moment it was buried.
+ */
+export function dateInputToISO(day: string, now = new Date()): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return day
+  const noon = new Date(day + 'T12:00:00')
+  return new Date(Math.min(noon.getTime(), now.getTime() - 1000)).toISOString()
+}
 
 export function addDays(days: number, from = new Date()): string {
   const d = new Date(from)

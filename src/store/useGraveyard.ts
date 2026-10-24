@@ -2,8 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { paths } from '../config'
 import { seedProjects } from '../lib/seed'
+import { normalizeProject } from '../lib/validate'
 import { addDays, uid } from '../lib/util'
-import type { EventType, PathId, Project, ProjectDraft, Relevance, SalvageItem } from '../types'
+import type { EventType, PathId, Project, ProjectDraft, Relevance, SalvageItem, TimelineEvent } from '../types'
 
 type Theme = 'dark' | 'light'
 
@@ -37,6 +38,17 @@ interface GraveyardState {
 }
 
 const now = () => new Date().toISOString()
+
+/** Moves the first "started" and last "abandoned" timeline entries when their dates are edited. */
+function syncDates(events: TimelineEvent[], before: Project, after: { startedAt: string; lastTouchedAt: string }) {
+  const first = events.findIndex((e) => e.type === 'started')
+  const last = events.map((e) => e.type).lastIndexOf('abandoned')
+  return events.map((e, i) => {
+    if (i === first && before.startedAt !== after.startedAt) return { ...e, at: after.startedAt }
+    if (i === last && before.lastTouchedAt !== after.lastTouchedAt) return { ...e, at: after.lastTouchedAt }
+    return e
+  })
+}
 const event = (type: EventType, text: string, at = now()) => ({ id: uid(), type, at, text })
 
 export const useGraveyard = create<GraveyardState>()(
@@ -79,7 +91,8 @@ export const useGraveyard = create<GraveyardState>()(
               ...p,
               ...rest,
               assessment: reassessed ? { interest, relevance, assessedAt: now() } : p.assessment,
-              events: [...p.events, event('note', 'Tombstone edited')],
+              // Keep the timeline in step with edited dates.
+              events: [...syncDates(p.events, p, d), event('note', 'Tombstone edited')],
             }
           }),
 
@@ -163,7 +176,21 @@ export const useGraveyard = create<GraveyardState>()(
         replaceAll: (projects) => set({ projects }),
       }
     },
-    { name: 'project-graveyard', version: 1 },
+    {
+      name: 'project-graveyard',
+      version: 1,
+      // Repair whatever is in storage before the app uses it.
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<GraveyardState>
+        return {
+          ...current,
+          ...saved,
+          projects: Array.isArray(saved.projects)
+            ? saved.projects.map(normalizeProject).filter((p): p is Project => p !== null)
+            : current.projects,
+        }
+      },
+    },
   ),
 )
 

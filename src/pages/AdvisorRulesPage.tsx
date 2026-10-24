@@ -3,9 +3,9 @@ import { useTitle } from '../lib/useTitle'
 import { useRef, useState } from 'react'
 import { Modal, Section } from '../components/ui'
 import { causes, paths, rules, type Condition } from '../config'
+import { parseExport } from '../lib/validate'
 import { useGraveyard } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
-import type { Project } from '../types'
 
 const signalLabels: Record<string, string> = {
   completion: 'Completion',
@@ -94,12 +94,13 @@ function DataTools() {
 
   const importJson = async (file: File) => {
     try {
-      const data = JSON.parse(await file.text()) as { projects?: Project[] }
-      if (!Array.isArray(data.projects) || data.projects.some((p) => !p.id || !p.name || !p.assessment)) throw new Error()
-      replaceAll(data.projects)
-      setMsg(`Imported ${data.projects.length} projects.`)
-    } catch {
-      setMsg('That file doesn’t look like a graveyard export.')
+      const imported = parseExport(await file.text())
+      const previous = projects
+      replaceAll(imported)
+      setMsg(`Imported ${imported.length} project${imported.length === 1 ? '' : 's'}.`)
+      toast(`Imported ${imported.length} project${imported.length === 1 ? '' : 's'}.`, { label: 'Undo', run: () => replaceAll(previous) })
+    } catch (e) {
+      setMsg((e as Error).message)
     }
   }
 
@@ -117,7 +118,12 @@ function DataTools() {
         type="file"
         accept="application/json"
         className="hidden"
-        onChange={(e) => e.target.files?.[0] && importJson(e.target.files[0])}
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          // Reset so picking the same file again still fires a change.
+          e.target.value = ''
+          if (file) importJson(file)
+        }}
       />
       <button type="button" className="btn-ghost w-full" onClick={() => setConfirm('reset')}>
         <RotateCcw className="size-4" /> Load demo projects

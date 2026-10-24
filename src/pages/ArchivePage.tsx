@@ -26,7 +26,7 @@ export function ArchivePage() {
   const haunting = withStatus.filter((x) => x.status === 'haunting').map((x) => x.p)
 
   const q = query.trim().toLowerCase()
-  const visible = withStatus
+  const visible = [...withStatus]
     .filter(({ p, status: s }) => {
       if (status !== 'all' && s !== status) return false
       if (cause !== 'all' && p.cause !== cause) return false
@@ -34,7 +34,7 @@ export function ArchivePage() {
       return [p.name, p.description, p.goal, p.causeNote, ...p.stack].join(' ').toLowerCase().includes(q)
     })
     .map((x) => x.p)
-    .toSorted((a, b) => {
+    .sort((a, b) => {
       switch (sort) {
         case 'name':
           return a.name.localeCompare(b.name)

@@ -25,21 +25,25 @@ async function gh<T>(path: string, accept = 'application/vnd.github+json'): Prom
   return accept.includes('raw') ? ((await res.text()) as T) : res.json()
 }
 
-/** First real paragraph of a README, with markdown noise stripped. */
+/** First real paragraph of a README (skipping headings, badges and short taglines), with markdown noise stripped. */
 export function readmeExcerpt(md: string, max = 400): string {
-  const para = md
+  const clean = (block: string) =>
+    block
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/[*_`>]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  const blocks = md
     .replace(/<[^>]+>/g, '')
+    .replace(/```[\s\S]*?```/g, '')
     .split(/\n\s*\n/)
     .map((b) => b.trim())
-    .find((b) => b && !b.startsWith('#') && !b.startsWith('![') && !b.startsWith('[![') && !/^[-=*_]{3,}$/.test(b))
-  if (!para) return ''
-  const clean = para
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/[*_`>]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-  return clean.length > max ? clean.slice(0, max - 1) + '…' : clean
+    .filter((b) => b && !b.startsWith('#') && !b.startsWith('|') && !/^[-=*_]{3,}$/.test(b))
+    .map(clean)
+    .filter(Boolean)
+  const para = blocks.find((b) => b.length >= 40) ?? blocks[0] ?? ''
+  return para.length > max ? para.slice(0, max - 1) + '…' : para
 }
 
 export async function importRepo(input: string): Promise<RepoInfo> {

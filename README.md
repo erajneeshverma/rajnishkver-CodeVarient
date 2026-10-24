@@ -5,6 +5,8 @@
 A place to lay unfinished projects to rest, understand why they stopped, and decide whether they deserve a second life.
 Built for **Code Variant · Build 01 · Problem Statement 05**.
 
+**Live demo:** https://project-graveyard-codevariant.vercel.app
+
 ## What it does
 
 | Feature | What it means |

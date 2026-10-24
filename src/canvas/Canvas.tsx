@@ -128,7 +128,11 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   )
 }
 
-/** A card the user can pick up. Children are the card face; `preview` is what follows the pointer. */
+/**
+ * A card the user can pick up. Children are the card face; `preview` is what follows the pointer.
+ * With `handle`, keyboard focus goes to a small grip instead of the whole card, for cards
+ * that contain their own link (a draggable can't wrap another interactive element).
+ */
 export function DataCard({
   id,
   payload,
@@ -137,6 +141,7 @@ export function DataCard({
   preview,
   className,
   hint = true,
+  handle = false,
 }: {
   id: string
   payload: Payload
@@ -145,24 +150,34 @@ export function DataCard({
   preview?: () => ReactNode
   className?: string
   hint?: boolean
+  handle?: boolean
 }) {
   const render = preview ?? (() => <div className={cx('card p-4', className)}>{children}</div>)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, data: { payload, label, preview: render } satisfies CardData })
   return (
     <div
       ref={setNodeRef}
-      {...attributes}
+      // Pointer and key listeners sit on the whole card; keys from the grip bubble up to them.
       {...listeners}
-      aria-label={`${label}. Drag into an action zone.`}
+      {...(handle ? {} : attributes)}
+      data-card={label}
       className={cx(
         'group relative cursor-grab touch-manipulation select-none outline-none transition',
-        'focus-visible:ring-2 focus-visible:ring-lantern',
+        !handle && 'focus-visible:ring-2 focus-visible:ring-lantern',
         isDragging && 'opacity-30',
         className,
       )}
     >
-      {hint && (
-        <GripVertical aria-hidden className="absolute right-2 top-2 size-4 text-muted opacity-60 transition group-hover:opacity-100" />
+      {handle ? (
+        <span
+          {...attributes}
+          aria-label={`Move ${label}`}
+          className="absolute right-2 top-2 z-10 grid size-7 place-items-center rounded-md text-muted opacity-60 outline-none transition hover:bg-surface-2 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-lantern"
+        >
+          <GripVertical aria-hidden className="size-4" />
+        </span>
+      ) : (
+        hint && <GripVertical aria-hidden className="absolute right-2 top-2 size-4 text-muted opacity-60 transition group-hover:opacity-100" />
       )}
       {children}
     </div>

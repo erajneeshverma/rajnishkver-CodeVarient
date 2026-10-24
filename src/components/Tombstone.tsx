@@ -21,7 +21,7 @@ export function Tombstone({ project }: { project: Project }) {
         payload={{ kind: 'project', id: project.id }}
         label={project.name}
         className="h-full"
-        hint={false}
+        handle
         preview={() => <ProjectChip project={project} className="w-60 shadow-2xl" />}
       >
       <Link

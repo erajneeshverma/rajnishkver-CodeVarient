@@ -1,16 +1,18 @@
-import { ArrowLeft, Bell, BellOff, ExternalLink, FileDown, Pencil, RotateCcw, Trash2 } from 'lucide-react'
+import { ArrowLeft, Bell, ExternalLink, Pencil } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { ActionZone, DataCard } from '../canvas/Canvas'
 import { Advisor } from '../components/Advisor'
+import { ProjectChip } from '../components/ProjectChip'
 import { Timeline } from '../components/Timeline'
-import { Empty, InterestPicker, Modal, Progress, RelevancePicker, Section, StatusBadge } from '../components/ui'
-import { causes, hauntOptions, paths, relevanceOptions, salvageKinds } from '../config'
+import { Empty, InterestPicker, Progress, RelevancePicker, Section, StatusBadge } from '../components/ui'
+import { causes, hauntOptions, paths, salvageKinds } from '../config'
 import { downloadMarkdown } from '../lib/postmortem'
-import { effectiveStatus, formatDate, relativeTime } from '../lib/util'
+import { useTitle } from '../lib/useTitle'
+import { cx, effectiveStatus, formatDate, relativeTime } from '../lib/util'
 import { useGraveyard, useProject } from '../store/useGraveyard'
 import { toast } from '../store/useToast'
-import { useTitle } from '../lib/useTitle'
-import type { Relevance, SalvageKind } from '../types'
+import type { Project, SalvageKind } from '../types'
 import { NotFound } from './NotFound'
 
 export function ProjectPage() {
@@ -18,11 +20,6 @@ export function ProjectPage() {
   const project = useProject(id)
   useTitle(project ? project.name : 'Not found')
   const { hash } = useLocation()
-  const navigate = useNavigate()
-  const { remove, restore, hauntIn, clearHaunt, reopen } = useGraveyard()
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [assessing, setAssessing] = useState(false)
-  const [hauntOpen, setHauntOpen] = useState(false)
 
   useEffect(() => {
     if (hash) setTimeout(() => document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
@@ -32,8 +29,6 @@ export function ProjectPage() {
 
   const status = effectiveStatus(project)
   const cause = causes.find((c) => c.id === project.cause)
-  const decision = project.decision
-  const decisionCfg = decision && paths.find((p) => p.id === decision.path)
 
   return (
     <div>
@@ -41,21 +36,21 @@ export function ProjectPage() {
         <ArrowLeft className="size-4" /> Back to the graveyard
       </Link>
 
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <StatusBadge status={status} />
             {project.hauntAt && project.status === 'resting' && (
               <span className="inline-flex items-center gap-1 text-xs text-muted">
-                <Bell className="size-3" /> {status === 'haunting' ? `Reminder was due ${relativeTime(project.hauntAt)}` : `Haunts you ${relativeTime(project.hauntAt)}`}
+                <Bell className="size-3" />{' '}
+                {status === 'haunting' ? `Reminder was due ${relativeTime(project.hauntAt)}` : `Haunts you ${relativeTime(project.hauntAt)}`}
               </span>
             )}
           </div>
           <h1 className="font-display text-3xl font-semibold sm:text-4xl">{project.name}</h1>
           <p className="mt-1 text-muted">{project.description}</p>
           <p className="mt-2 text-xs text-muted">
-            Started {formatDate(project.startedAt)} · Last touched {formatDate(project.lastTouchedAt)} · Buried{' '}
-            {formatDate(project.buriedAt)}
+            Started {formatDate(project.startedAt)} · Last touched {formatDate(project.lastTouchedAt)} · Buried {formatDate(project.buriedAt)}
           </p>
           {(project.stack.length > 0 || project.repoUrl) && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -72,82 +67,16 @@ export function ProjectPage() {
             </div>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {project.status === 'resting' &&
-            (project.hauntAt ? (
-              <button type="button" className="btn-ghost" onClick={() => {
-                  clearHaunt(project.id)
-                  toast('Reminder cleared. It will rest quietly.')
-                }}>
-                <BellOff className="size-4" /> Stop haunting
-              </button>
-            ) : (
-              <button type="button" className="btn-ghost" onClick={() => setHauntOpen(true)}>
-                <Bell className="size-4" /> Haunt me later
-              </button>
-            ))}
-          <button
-            type="button"
-            className="btn-ghost"
-            title="Download a Markdown post-mortem"
-            onClick={() => {
-              downloadMarkdown(project)
-              toast('Post-mortem downloaded as Markdown.')
-            }}
-          >
-            <FileDown className="size-4" /> Export
-          </button>
-          <Link to={`/project/${project.id}/edit`} className="btn-ghost">
-            <Pencil className="size-4" /> Edit
-          </Link>
-          <button type="button" className="btn-danger" onClick={() => setConfirmDelete(true)} aria-label="Delete project">
-            <Trash2 className="size-4" />
-          </button>
-        </div>
+        <Link to={`/project/${project.id}/edit`} className="btn-ghost self-start sm:self-auto">
+          <Pencil className="size-4" /> Edit tombstone
+        </Link>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <ActionCanvas project={project} />
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 space-y-6 lg:col-span-2">
-          {decision && decisionCfg && (
-            <section
-              className={
-                decisionCfg.resultStatus === 'rip'
-                  ? 'card border-rose-500/40 p-6'
-                  : 'card border-emerald-500/40 bg-emerald-500/5 p-6'
-              }
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted">Decided {formatDate(decision.decidedAt)}</p>
-                  <h2 className="mt-1 font-display text-xl font-semibold">
-                    {decisionCfg.emoji} {decisionCfg.label}
-                  </h2>
-                  {decision.path !== decision.suggested && (
-                    <p className="mt-1 text-xs text-muted">
-                      You overrode the advisor, which suggested {paths.find((p) => p.id === decision.suggested)?.label}.
-                    </p>
-                  )}
-                </div>
-                <button type="button" className="btn-ghost" onClick={() => {
-                    reopen(project.id)
-                    toast(`${project.name} is resting again. Take another look below.`)
-                  }}>
-                  <RotateCcw className="size-4" /> Reconsider
-                </button>
-              </div>
-              {decision.epitaph ? (
-                <blockquote className="mt-4 border-l-2 border-rose-400/60 pl-4 font-display text-lg italic">“{decision.epitaph}”</blockquote>
-              ) : (
-                decision.nextSteps.length > 0 && (
-                  <ol className="mt-4 list-decimal space-y-1 pl-5 text-sm">
-                    {decision.nextSteps.map((s) => (
-                      <li key={s}>{s}</li>
-                    ))}
-                  </ol>
-                )
-              )}
-            </section>
-          )}
+          {project.decision && <DecisionCard key={project.decision.decidedAt} project={project} />}
 
           <Section title="The Tombstone">
             <dl className="grid gap-5 text-sm sm:grid-cols-2">
@@ -177,19 +106,11 @@ export function ProjectPage() {
             </div>
           </Section>
 
-          {/* On phones the assessment card sits far below, so show a compact version next to the advice. */}
-          <div className="card flex items-center gap-3 p-4 text-sm lg:hidden">
-            <span className="flex-1">
-              <span className="block text-xs text-muted">Today’s assessment</span>
-              Interest {project.assessment.interest}/5 · {relevanceOptions.find((r) => r.id === project.assessment.relevance)?.label}
-            </span>
-            <button type="button" className="btn-ghost py-1.5" onClick={() => setAssessing(true)}>
-              Reassess
-            </button>
-          </div>
+          {/* On phones the sidebar sits far below, so the live assessment comes right before the advice. */}
+          <Assessment project={project} className="lg:hidden" />
 
           <div id="advisor" className="scroll-mt-24">
-            <Section title={decision ? 'Revival Advisor (for reference)' : 'Revival Advisor'}>
+            <Section title={project.decision ? 'Revival Advisor (change your mind any time)' : 'Revival Advisor'}>
               <Advisor project={project} />
             </Section>
           </div>
@@ -200,92 +121,181 @@ export function ProjectPage() {
         </div>
 
         <aside className="min-w-0 space-y-6">
-          <Section
-            className="hidden lg:block"
-            title="Today’s assessment"
-            action={
-              <button type="button" className="btn-ghost py-1.5" onClick={() => setAssessing(true)}>
-                Reassess
-              </button>
-            }
-          >
-            <dl className="space-y-3 text-sm">
-              <div>
-                <dt className="text-xs text-muted">Interest</dt>
-                <dd>
-                  {'🕯️'.repeat(project.assessment.interest)}
-                  <span className="opacity-25 grayscale">{'🕯️'.repeat(5 - project.assessment.interest)}</span>{' '}
-                  <span className="text-muted">{project.assessment.interest}/5</span>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Still relevant?</dt>
-                <dd>{relevanceOptions.find((r) => r.id === project.assessment.relevance)?.label}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">Last assessed</dt>
-                <dd>{formatDate(project.assessment.assessedAt)}</dd>
-              </div>
-            </dl>
-          </Section>
-
-          <SalvagePanel projectId={project.id} />
+          <Assessment project={project} className="hidden lg:block" />
+          <SalvagePanel project={project} />
         </aside>
       </div>
-
-      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title={`Exhume ${project.name}?`}>
-        <p className="text-sm text-muted">This removes the project and its whole history from your graveyard. You’ll have a few seconds to undo it.</p>
-        <div className="mt-6 flex justify-end gap-2">
-          <button type="button" className="btn-ghost" onClick={() => setConfirmDelete(false)}>
-            Keep it
-          </button>
-          <button
-            type="button"
-            className="btn-danger"
-            onClick={() => {
-              const index = useGraveyard.getState().projects.findIndex((p) => p.id === project.id)
-              const snapshot = project
-              remove(project.id)
-              navigate('/')
-              toast(`${snapshot.name} was exhumed.`, { label: 'Undo', run: () => restore(snapshot, index) })
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      </Modal>
-
-      <Modal open={hauntOpen} onClose={() => setHauntOpen(false)} title="Haunt me later">
-        <p className="mb-4 text-sm text-muted">
-          We’ll mark {project.name} as <strong>Haunting</strong> and surface it on your graveyard when it’s time to take another look.
-        </p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {hauntOptions.map((d) => (
-            <button
-              key={d}
-              type="button"
-              className="btn-ghost"
-              onClick={() => {
-                hauntIn(project.id, d)
-                setHauntOpen(false)
-                toast(`👻 ${project.name} will haunt you in ${d} days.`)
-              }}
-            >
-              {d} days
-            </button>
-          ))}
-        </div>
-      </Modal>
-
-      {assessing && (
-        <AssessModal
-          id={project.id}
-          interest={project.assessment.interest}
-          relevance={project.assessment.relevance}
-          onClose={() => setAssessing(false)}
-        />
-      )}
     </div>
+  )
+}
+
+/** Haunt, export and exhume, all by dragging the project card into a zone. */
+function ActionCanvas({ project }: { project: Project }) {
+  const navigate = useNavigate()
+  const { remove, restore, hauntIn, clearHaunt } = useGraveyard()
+  const isThis = (p: { kind: string; id?: string }) => p.kind === 'project' && p.id === project.id
+
+  const exhume = () => {
+    const index = useGraveyard.getState().projects.findIndex((p) => p.id === project.id)
+    const snapshot = project
+    remove(project.id)
+    navigate('/')
+    toast(`⚰️ ${snapshot.name} was exhumed.`, { label: 'Undo', run: () => restore(snapshot, index) })
+  }
+
+  return (
+    <section aria-label="Project actions" className="card p-4 sm:p-5">
+      <div className="grid items-center gap-4 sm:grid-cols-[13rem_1fr]">
+        <div className="flex flex-col items-center gap-1.5">
+          <DataCard id={`actions-${project.id}`} payload={{ kind: 'project', id: project.id }} label={project.name} className="w-full max-w-[13rem]" hint={false}>
+            <ProjectChip project={project} />
+          </DataCard>
+          <p className="text-center text-xs text-muted">Drag the card into a zone</p>
+        </div>
+        <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+          {project.status === 'resting' &&
+            (project.hauntAt ? (
+              <ActionZone
+                id="stop-haunting"
+                label="Stop haunting"
+                icon="🔕"
+                tone="violet"
+                hint="Clear the revisit reminder"
+                accepts={isThis}
+                onDrop={() => {
+                  clearHaunt(project.id)
+                  toast('Reminder cleared. It will rest quietly.')
+                }}
+              />
+            ) : (
+              <div className="rounded-xl border-2 border-dashed border-violet-500/30 p-3 sm:col-span-2 xl:col-span-1">
+                <p className="text-sm font-medium">
+                  <span aria-hidden>👻</span> Haunt me in…
+                </p>
+                <div className="mt-2 grid grid-cols-4 gap-1.5">
+                  {hauntOptions.map((d) => (
+                    <ActionZone
+                      key={d}
+                      id={`haunt-${d}`}
+                      label={`${d} days`}
+                      tone="violet"
+                      className="p-2 text-center [&>div]:justify-center"
+                      accepts={isThis}
+                      onDrop={() => {
+                        hauntIn(project.id, d)
+                        toast(`👻 ${project.name} will haunt you in ${d} days.`)
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          <ActionZone
+            id="export"
+            label="Export post-mortem"
+            icon="📄"
+            hint="Download it as Markdown"
+            accepts={isThis}
+            onDrop={() => {
+              downloadMarkdown(project)
+              toast('📄 Post-mortem downloaded as Markdown.')
+            }}
+          />
+          <ActionZone id="exhume" label="Exhume" icon="⚰️" tone="danger" hint="Delete it (you can undo)" accepts={isThis} onDrop={exhume} />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/** The chosen fate. Steps and epitaph save as you type; drag the card out to reconsider. */
+function DecisionCard({ project }: { project: Project }) {
+  const { updateDecision, reopen } = useGraveyard()
+  const d = project.decision!
+  const cfg = paths.find((p) => p.id === d.path)!
+  const rip = cfg.resultStatus === 'rip'
+  const [steps, setSteps] = useState(() => [...d.nextSteps, '', '', ''].slice(0, Math.max(3, d.nextSteps.length)))
+  const [epitaph, setEpitaph] = useState(d.epitaph ?? '')
+
+  const face = (
+    <div className={cx('card w-full max-w-[13rem] p-4 text-center', rip ? 'border-rose-500/50' : 'border-emerald-500/50')}>
+      <p className="text-3xl" aria-hidden>
+        {cfg.emoji}
+      </p>
+      <p className="mt-1 font-display text-lg font-semibold">{cfg.label}</p>
+      <p className="text-xs text-muted">Decided {formatDate(d.decidedAt)}</p>
+    </div>
+  )
+
+  return (
+    <section id="decision" aria-label="Decision" className={cx('card scroll-mt-24 p-5 sm:p-6', rip ? 'border-rose-500/40' : 'border-emerald-500/40 bg-emerald-500/5')}>
+      <div className="grid gap-5 sm:grid-cols-[13rem_1fr]">
+        <div className="flex flex-col items-center gap-2.5">
+          <DataCard id={`decision-${project.id}`} payload={{ kind: 'decision', id: project.id }} label={`${cfg.label} decision`} className="w-full max-w-[13rem]">
+            {face}
+          </DataCard>
+          <ActionZone
+            id="reconsider"
+            label="Dig it back up"
+            icon="↩️"
+            tone="neutral"
+            hint="Drop the decision here to reconsider"
+            className="w-full max-w-[13rem]"
+            accepts={(p) => p.kind === 'decision' && p.id === project.id}
+            onDrop={() => {
+              reopen(project.id)
+              toast(`${project.name} is resting again. Take another look at the advice.`)
+            }}
+          />
+        </div>
+        <div className="min-w-0">
+          <h2 className="font-display text-xl font-semibold">{rip ? 'Laid to rest' : 'Revived'}</h2>
+          {d.path !== d.suggested && (
+            <p className="mt-1 text-xs text-muted">You overrode the advisor, which suggested {paths.find((p) => p.id === d.suggested)?.label}.</p>
+          )}
+          {rip ? (
+            <div className="mt-3">
+              <label className="label" htmlFor="epitaph">
+                Epitaph: what did this project teach you?
+              </label>
+              <textarea
+                id="epitaph"
+                rows={3}
+                className="field font-display text-base italic"
+                placeholder="e.g. Validate with users before building the dashboard."
+                value={epitaph}
+                onChange={(e) => {
+                  setEpitaph(e.target.value)
+                  updateDecision(project.id, { epitaph: e.target.value })
+                }}
+              />
+              <p className="mt-1 text-xs text-muted">Saved as you type. It appears on the Insights epitaph wall.</p>
+            </div>
+          ) : (
+            <div className="mt-3 space-y-2">
+              <p className="label">Your next steps</p>
+              {steps.map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-5 text-right text-sm text-muted">{i + 1}.</span>
+                  <input
+                    aria-label={`Step ${i + 1}`}
+                    className="field"
+                    value={s}
+                    placeholder={`Step ${i + 1}`}
+                    onChange={(e) => {
+                      const next = steps.map((x, j) => (j === i ? e.target.value : x))
+                      setSteps(next)
+                      updateDecision(project.id, { nextSteps: next.map((x) => x.trim()).filter(Boolean) })
+                    }}
+                  />
+                </div>
+              ))}
+              <p className="text-xs text-muted">Saved as you type.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -298,85 +308,103 @@ function Detail({ label, value, wide }: { label: string; value: string; wide?: b
   )
 }
 
-function AssessModal({ id, interest: i0, relevance: r0, onClose }: { id: string; interest: number; relevance: Relevance; onClose: () => void }) {
+/** Changing either answer re-ranks the advice immediately; no submit step. */
+function Assessment({ project, className }: { project: Project; className?: string }) {
   const assess = useGraveyard((s) => s.assess)
-  const [interest, setInterest] = useState(i0)
-  const [relevance, setRelevance] = useState(r0)
+  const { interest, relevance } = project.assessment
   return (
-    <Modal open onClose={onClose} title="Take another look">
-      <div className="space-y-5">
+    <Section title="Today’s assessment" className={className}>
+      <div className="space-y-4">
         <div>
-          <span className="label">How interested are you today?</span>
-          <InterestPicker value={interest} onChange={setInterest} />
+          <span className="label">Interest today</span>
+          <InterestPicker value={interest} onChange={(v) => assess(project.id, v, relevance)} />
         </div>
         <div>
-          <span className="label">Is the idea still relevant?</span>
-          <RelevancePicker value={relevance} onChange={setRelevance} />
+          <span className="label">Still relevant?</span>
+          <RelevancePicker value={relevance} onChange={(v) => assess(project.id, interest, v)} />
         </div>
+        <p className="text-xs text-muted">Changes re-rank the advice instantly. Last assessed {formatDate(project.assessment.assessedAt)}.</p>
       </div>
-      <div className="mt-6 flex justify-end gap-2">
-        <button type="button" className="btn-ghost" onClick={onClose}>
-          Cancel
-        </button>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => {
-            assess(id, interest, relevance)
-            onClose()
-            toast('Assessment updated. The advice below has been re-ranked.')
-          }}
-        >
-          Update advice
-        </button>
-      </div>
-    </Modal>
+    </Section>
   )
 }
 
-function SalvagePanel({ projectId }: { projectId: string }) {
-  const project = useProject(projectId)!
+/** Type a part, then drag its card into the bin. Drag an existing part to the scrap zone to remove it. */
+function SalvagePanel({ project }: { project: Project }) {
   const { addSalvage, removeSalvage } = useGraveyard()
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
   const [kind, setKind] = useState<SalvageKind>('component')
+  const kindCfg = salvageKinds.find((k) => k.id === kind)!
+
+  const newPart = (
+    <div className="flex items-start gap-2 rounded-lg border border-lantern/60 bg-surface p-2.5 text-sm shadow-sm">
+      <span aria-hidden>{kindCfg.emoji}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium">{title.trim() || 'New part'}</span>
+        {note.trim() && <span className="block truncate text-xs text-muted">{note.trim()}</span>}
+      </span>
+    </div>
+  )
 
   return (
     <Section title="Salvage parts">
-      {project.salvage.length === 0 ? (
-        <Empty>Nothing salvaged yet. Code, lessons and assets you can reuse go here, and they count towards Repurpose.</Empty>
-      ) : (
-        <ul className="space-y-2">
-          {project.salvage.map((s) => (
-            <li key={s.id} className="group flex items-start gap-2 rounded-lg bg-surface-2 p-2.5 text-sm">
-              <span aria-hidden>{salvageKinds.find((k) => k.id === s.kind)?.emoji}</span>
-              <span className="flex-1">
-                <span className="block font-medium">{s.title}</span>
-                {s.note && <span className="block text-xs text-muted">{s.note}</span>}
-              </span>
-              <button
-                type="button"
-                aria-label={`Remove ${s.title}`}
-                onClick={() => removeSalvage(project.id, s.id)}
-                className="text-muted opacity-0 hover:text-rose-500 focus:opacity-100 group-hover:opacity-100"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <form
-        className="mt-4 space-y-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (!title.trim()) return
+      <ActionZone
+        bare
+        id="salvage-bin"
+        label="the salvage bin"
+        accepts={(p) => p.kind === 'new-salvage' && p.id === project.id}
+        onDrop={() => {
           addSalvage(project.id, { kind, title: title.trim(), note: note.trim() || undefined })
           toast(`♻️ Salvaged “${title.trim()}”.`)
           setTitle('')
           setNote('')
         }}
+        className="p-2"
       >
+        {project.salvage.length === 0 ? (
+          <p className="p-4 text-center text-sm text-muted">
+            The salvage bin is empty. Describe a reusable part below, then drag its card in here. Parts count towards Repurpose.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {project.salvage.map((s) => (
+              <li key={s.id}>
+                <DataCard id={`salvage-${s.id}`} payload={{ kind: 'salvage', id: project.id, itemId: s.id }} label={`Salvaged part ${s.title}`}>
+                  <div className="flex items-start gap-2 rounded-lg bg-surface-2 p-2.5 pr-7 text-sm">
+                    <span aria-hidden>{salvageKinds.find((k) => k.id === s.kind)?.emoji}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{s.title}</span>
+                      {s.note && <span className="block text-xs text-muted">{s.note}</span>}
+                    </span>
+                  </div>
+                </DataCard>
+              </li>
+            ))}
+          </ul>
+        )}
+      </ActionZone>
+
+      {project.salvage.length > 0 && (
+        <ActionZone
+          id="scrap"
+          label="Scrap a part"
+          icon="🗑️"
+          tone="danger"
+          hint="Drag a part here to remove it"
+          className="mt-2 py-2"
+          accepts={(p) => p.kind === 'salvage' && p.id === project.id}
+          onDrop={(p) => {
+            if (p.kind !== 'salvage') return
+            const item = project.salvage.find((x) => x.id === p.itemId)
+            removeSalvage(project.id, p.itemId)
+            toast(`🗑️ Scrapped “${item?.title ?? 'part'}”.`)
+          }}
+        />
+      )}
+
+      <div className="mt-4 space-y-2 border-t border-line pt-4">
+        <p className="text-xs font-medium text-muted">New part</p>
         <select aria-label="Kind of part" className="field" value={kind} onChange={(e) => setKind(e.target.value as SalvageKind)}>
           {salvageKinds.map((k) => (
             <option key={k.id} value={k.id}>
@@ -386,10 +414,15 @@ function SalvagePanel({ projectId }: { projectId: string }) {
         </select>
         <input aria-label="Part name" className="field" placeholder="What can be reused?" value={title} onChange={(e) => setTitle(e.target.value)} />
         <input aria-label="Note" className="field" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
-        <button type="submit" className="btn-ghost w-full" disabled={!title.trim()}>
-          Salvage it
-        </button>
-      </form>
+        {title.trim() ? (
+          <DataCard id={`new-salvage-${project.id}`} payload={{ kind: 'new-salvage', id: project.id }} label={`New part ${title.trim()}`}>
+            {newPart}
+            <p className="mt-1 text-center text-xs text-muted">↑ Drag this card into the salvage bin</p>
+          </DataCard>
+        ) : (
+          <Empty>Name the part and its card appears here, ready to drag.</Empty>
+        )}
+      </div>
     </Section>
   )
 }

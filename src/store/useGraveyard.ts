@@ -20,6 +20,7 @@ interface GraveyardState {
   restore: (project: Project, index: number) => void
   assess: (id: string, interest: number, relevance: Relevance) => void
   decide: (id: string, d: { path: PathId; suggested: PathId; nextSteps: string[]; epitaph?: string }) => void
+  updateDecision: (id: string, patch: { nextSteps?: string[]; epitaph?: string }) => void
   reopen: (id: string) => void
   hauntIn: (id: string, days: number) => void
   clearHaunt: (id: string) => void
@@ -106,12 +107,18 @@ export const useGraveyard = create<GraveyardState>()(
           }),
 
         assess: (id, interest, relevance) =>
-          update(id, (p) => ({
-            ...p,
-            assessment: { interest, relevance, assessedAt: now() },
-            hauntAt: undefined,
-            events: [...p.events, event('revisited', `Revisited: interest ${interest}/5, relevance “${relevance}”`)],
-          })),
+          update(id, (p) => {
+            const text = `Revisited: interest ${interest}/5, relevance “${relevance}”`
+            const last = p.events[p.events.length - 1]
+            // Assessment applies live as you click, so fold quick changes into one timeline entry.
+            const recent = last?.type === 'revisited' && last.text.startsWith('Revisited:') && Date.now() - Date.parse(last.at) < 5 * 60_000
+            return {
+              ...p,
+              assessment: { interest, relevance, assessedAt: now() },
+              hauntAt: undefined,
+              events: recent ? [...p.events.slice(0, -1), { ...last, text, at: now() }] : [...p.events, event('revisited', text)],
+            }
+          }),
 
         decide: (id, { path, suggested, nextSteps, epitaph }) =>
           update(id, (p) => {
@@ -131,6 +138,9 @@ export const useGraveyard = create<GraveyardState>()(
               ],
             }
           }),
+
+        updateDecision: (id, patch) =>
+          update(id, (p) => (p.decision ? { ...p, decision: { ...p.decision, ...patch } } : p)),
 
         reopen: (id) =>
           update(id, (p) => ({

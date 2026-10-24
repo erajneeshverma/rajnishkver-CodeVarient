@@ -3,6 +3,7 @@ import { Suspense, useEffect } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { cx, effectiveStatus } from '../lib/util'
 import { useGraveyard } from '../store/useGraveyard'
+import { CanvasProvider } from '../canvas/Canvas'
 import { Toaster } from './Toaster'
 
 const nav = [
@@ -56,6 +57,7 @@ export function Layout() {
   }, [pathname])
 
   return (
+    <CanvasProvider>
     <div className="flex min-h-screen flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
@@ -137,5 +139,6 @@ export function Layout() {
       </footer>
       <Toaster />
     </div>
+    </CanvasProvider>
   )
 }

@@ -11,6 +11,7 @@ interface GraveyardState {
   projects: Project[]
   draft: Partial<ProjectDraft> | null
   theme: Theme
+  introSeen: boolean
 
   bury: (draft: ProjectDraft) => string
   edit: (id: string, draft: ProjectDraft) => void
@@ -29,6 +30,7 @@ interface GraveyardState {
   saveDraft: (draft: Partial<ProjectDraft>) => void
   clearDraft: () => void
   toggleTheme: () => void
+  dismissIntro: () => void
   resetDemo: () => void
   clearAll: () => void
   replaceAll: (projects: Project[]) => void
@@ -47,6 +49,7 @@ export const useGraveyard = create<GraveyardState>()(
         projects: seedProjects(),
         draft: null,
         theme: 'dark',
+        introSeen: false,
 
         bury: (d) => {
           const id = uid()
@@ -154,6 +157,7 @@ export const useGraveyard = create<GraveyardState>()(
         saveDraft: (draft) => set({ draft }),
         clearDraft: () => set({ draft: null }),
         toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+        dismissIntro: () => set({ introSeen: true }),
         resetDemo: () => set({ projects: seedProjects() }),
         clearAll: () => set({ projects: [] }),
         replaceAll: (projects) => set({ projects }),

@@ -2,6 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Ghost, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Intro } from '../components/Intro'
 import { Tombstone } from '../components/Tombstone'
 import { Empty } from '../components/ui'
 import { causes, statuses } from '../config'
@@ -59,6 +60,8 @@ export function ArchivePage() {
           thinks it deserves.
         </p>
       </div>
+
+      <Intro />
 
       {haunting.length > 0 && (
         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-violet-500/40 bg-violet-500/10 p-4 sm:flex-row sm:items-center">

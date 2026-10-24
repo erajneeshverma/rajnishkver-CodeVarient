@@ -1,58 +1,64 @@
 # Demo script (about 3 minutes)
 
 Live: https://project-graveyard-codevariant.vercel.app
-Before you start, open **How advice works → Load demo projects** so everyone sees the same graveyard.
+Before you start, open **How advice works → Your data** and drag the graveyard card onto **Load demo projects**, so
+everyone sees the same graveyard.
 
 ## 1. The problem (20 s)
 
 > "Every builder has a folder of half-finished projects. GitHub keeps the code, but not *why* it stopped or *what it's
-> worth now*. So the only choices are ignore it or delete it. The Project Graveyard gives each project an honest
-> post-mortem and an explained decision."
+> worth now*. The Project Graveyard gives each project an honest post-mortem and an explained decision."
 
-## 2. The graveyard (20 s), on the home page
+## 2. The twist: the Canvas Protocol (15 s)
 
-- Each project is a **tombstone** with its status: Resting, Haunting, Revived or R.I.P.
-- Point out the **"haunting you"** banner: StudyBuddy's revisit reminder is due.
-- Filter by status, search "React".
+> "At hour 6 we lost our buttons. Every primary action is now a drag: you pick up a data card and drop it into an
+> action zone. Same product, new interaction."
 
-## 3. Bury a project live (60 s), with "Bury a project"
+## 3. The graveyard (25 s), on the home page
 
-1. Paste `github.com/erajneeshverma/rajnishkver-CodeVarient` into **Import from GitHub**. The name, stack and dates fill in.
-2. Set completion, then **Next**.
-3. **Autopsy**: pick *Scope creep* and type one honest line. **Next**.
-4. **Assess**: interest 4/5, still relevant. Point at the **advisor preview** box.
-5. **Lay it to rest.** You land on its advisor.
+- Each project is a **tombstone** with its status. Point out the **"haunting you"** banner.
+- Drag **CryptoPulse** onto **Haunt in 30 days** in the dock. A toast confirms it.
+- Drag **Smart Mirror** onto **Export post-mortem**, and a Markdown report downloads.
 
-## 4. The Revival Advisor (45 s), the key moment
+## 4. Bury a project live (50 s), with "Bury a project"
 
-- All five paths are ranked. Open the top one: every point has a **reason**, e.g. "+3 Scope creep killed it, and a clean
-  slate with a tighter scope fixes that."
-- Open a lower one to show the **Against** reasons.
-- Click **Reassess**, drop interest to 1 and set relevance to *No*. The advice flips to **Change the idea** or
-  **Archive**, and the timeline logs the revisit.
-- Choose **Restart** anyway: edit the 3 next steps, click **Resurrect**. A toast confirms it, the status changes to
-  *Revived*, and the timeline notes that you overrode the advisor.
+1. Paste `github.com/erajneeshverma/rajnishkver-CodeVarient` into **Import from GitHub**. It imports by itself: the
+   name, stack and dates fill in.
+2. **Next.** In the **Autopsy**, pick *Scope creep* and type one honest line. **Next.**
+3. **Assess**: interest 4/5, still relevant. Point at the **advisor preview** box.
+4. Drag the **tombstone preview** into **The grave**. You land on its advisor.
 
-> "It's rule-based on purpose. You can always see why, and you always make the final call."
+## 5. The Revival Advisor (45 s), the key moment
 
-## 5. Transparency and config (20 s), on "How advice works"
+- The project card sits on the left. The five paths are **drop zones**, ranked, each with its fit % and the
+  **reasons** for and against ("+3 Scope creep killed it, and a clean slate fixes that").
+- Change **Interest today** to 1 and **Still relevant?** to *No*. The ranking changes instantly; there's no submit.
+- Drag the card onto **Restart** anyway. The decision card appears with editable next steps, and the timeline notes
+  that you overrode the advisor.
+- Drag the decision card onto **Dig it back up** to reconsider.
 
-- Every rule is listed, rendered straight from `src/config/index.ts`.
-- > "If the rules change (the hour-6 twist, say), we edit data, not screens."
+> "Rule-based on purpose. You always see why, and you always make the final call."
 
-## 6. Insights and Salvage Yard (20 s)
+## 6. Accessibility (15 s)
 
-- **Insights**: your #1 cause of death, your revival rate, and findings like "StudyBuddy is your cheapest revival".
-- **Salvage Yard**: reusable parts from every project. Dead projects can still power new ones.
+- Tab to the project card, press **Space**, use the **arrow keys** to move between zones, then **Space** to drop.
+  The screen reader announces each step. The same flow works with touch on a phone.
 
-## 7. Close (10 s)
+## 7. Transparency, insights and salvage (15 s)
 
-> "Unfinished isn't failed. Understand it, decide its fate, and give the good ideas another chance."
+- **How advice works**: every rule, rendered straight from `src/config/index.ts`.
+- **Insights**: your #1 cause of death, your revival rate, and the epitaph wall.
+
+## 8. Close (10 s)
+
+> "Unfinished isn't failed. And when the rules change, a good product evolves instead of starting over."
 
 ## Likely questions
 
-- **Why rules and not AI?** Rules are transparent, run offline, are easy to test, and the user can see every reason.
-  An LLM explanation layer could sit on top later.
-- **Where is the data?** In the browser (localStorage), so no account is needed. Use Export/Import JSON for backups.
-- **How do you know the advisor is right?** Unit tests cover a scenario for each of the five paths, check that the
-  reasons add up to the score, and check that fit % agrees with the ranking (`npm test`).
+- **Why rules and not AI?** Rules are transparent, run offline, are easy to test, and the user sees every reason.
+- **Where is the data?** In the browser (localStorage). Drag the graveyard card onto **Export JSON** to back it up,
+  and drop the file on **Import JSON** to restore it.
+- **How did you adapt to the twist so fast?** Every screen shares one `DataCard` and one `ActionZone` component
+  (`src/canvas/Canvas.tsx`), and the app's logic didn't change. Only the way you trigger it did.
+- **Is drag and drop accessible?** Yes. Keyboard drag (Space, arrows, Space), screen-reader announcements, touch
+  support, and zero axe-core violations.

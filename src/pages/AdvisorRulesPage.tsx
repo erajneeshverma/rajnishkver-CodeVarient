@@ -45,6 +45,18 @@ export function AdvisorRulesPage() {
         </p>
       </div>
 
+      <section aria-label="How you act" className="card flex flex-col gap-3 border-lantern/40 bg-lantern-soft p-5 text-sm sm:flex-row sm:items-center">
+        <span className="text-3xl" aria-hidden>
+          🎨
+        </span>
+        <p>
+          <strong>Canvas Protocol:</strong> there are no action buttons. Pick up a card and drop it into an action zone: the
+          project onto a revival path, a tombstone onto the dock, the graveyard card below onto a data action. Keyboard:
+          focus a card, press <kbd className="rounded border border-line px-1">Space</kbd>, use the arrow keys to choose a zone,
+          then <kbd className="rounded border border-line px-1">Space</kbd> again.
+        </p>
+      </section>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {paths.map((p) => {
           const pathRules = rules.filter((r) => r.path === p.id)

@@ -50,7 +50,19 @@ Edit `label`, `description`, `badge` or `dot` in `statuses`.
 
 ### Change the reminder choices
 
-Edit `hauntOptions` (days), e.g. `[3, 7, 30]`.
+Edit `hauntOptions` (days), e.g. `[3, 7, 30]`. Each value becomes its own **Haunt me in…** drop zone on the project page.
+
+### Add a new drag-and-drop action
+
+All interactions use two components from `src/canvas/Canvas.tsx`:
+
+```tsx
+<DataCard id="…" payload={{ kind: 'project', id }} label="…">…card face…</DataCard>
+<ActionZone id="…" label="…" icon="…" accepts={(p) => p.kind === 'project'} onDrop={(p) => doIt(p)} />
+```
+
+Add the zone next to the others. Mouse, touch, keyboard and screen-reader support come for free. A new kind of card
+needs a new `Payload` variant in the same file.
 
 ## Changes that need code
 

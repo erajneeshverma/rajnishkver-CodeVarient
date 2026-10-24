@@ -9,6 +9,34 @@ Built for **Code Variant · Build 01 · Problem Statement 05**.
 
 ![The graveyard: every unfinished project as a tombstone with its status](docs/screenshots/archive.png)
 
+## 🎨 The Canvas Protocol (Variant Factor)
+
+At hour 6 the rules changed: no standard buttons for primary actions. **Every primary action now happens by dragging a
+data card into an action zone.** The product didn't change; the interaction did.
+
+| Action | Before | Now: drag… | …into |
+| --- | --- | --- | --- |
+| Bury a project | "Lay it to rest" button | the live **tombstone preview** | **The grave** (or *Update the tombstone* when editing) |
+| Choose a revival path | "Choose X" + modal | the **project card** | one of the five **ranked path zones** (fit % and reasons stay visible) |
+| Reconsider a decision | "Reconsider" button | the **decision card** | **Dig it back up** |
+| Haunt me later | button + modal | the project card or a **tombstone** | **Haunt me in 7 / 14 / 30 / 90 days** |
+| Export post-mortem | button | the project card or a tombstone | **Export post-mortem** |
+| Delete | button + confirm | the project card or a tombstone | **Exhume** (toast offers *Undo*) |
+| Salvage a part | "Salvage it" button | the **new part card** | **the salvage bin**; drag a part to **Scrap** to remove it |
+| Timeline entry | "Add" button | the **new entry card** | **the timeline**; drag an entry to **Erase** to remove it |
+| Backup, reset, clear | buttons + confirm | the **graveyard card** | **Export JSON**, **Load demo**, **Empty** (with *Undo*) |
+| Import a backup | file button | a **.json file** from your desktop | **Import JSON** |
+
+Things that aren't actions just work directly: reassessing re-ranks the advice live, next steps and epitaphs save as
+you type, and GitHub import starts by itself when you paste a repo URL.
+
+- **Mouse and touch:** pick up a card and drop it on a zone. Zones light up when they can take the card, and
+  dropping on empty canvas does nothing.
+- **Keyboard:** focus a card (or a tombstone's grip), press **Space**, use the **arrow keys** to jump between zones,
+  then **Space** to drop or **Esc** to cancel. A screen reader announces every step.
+- **Built on** [`src/canvas/Canvas.tsx`](src/canvas/Canvas.tsx): one `DataCard`, one `ActionZone` and a provider
+  (dnd-kit) that every screen reuses. Zero axe-core violations on every page in both themes.
+
 ## The problem
 
 GitHub already keeps the code. What gets lost is the **context** (what was done, what was left, why it stopped) and the
@@ -21,11 +49,11 @@ decision about what happens next.
 | Feature | What it means |
 | --- | --- |
 | **Project Archive** | Every project as a tombstone with its status (Resting · Haunting · Revived · R.I.P.), with search, filters and sorting. |
-| **Bury a project** | A guided 3-step form (Tombstone → Autopsy → Assess) that autosaves as you type and previews the advice. |
+| **Bury a project** | A guided 3-step form (Tombstone → Autopsy → Assess) that autosaves, previews the advice, and finishes by dragging the tombstone into the grave. |
 | **GitHub Import** | Paste a public repo URL to fill in the stack, the dates and a summary from the README. |
 | **The Autopsy** | Tag why it stopped (time, scope creep, tech blocker, tech debt, lost interest, no users) and add a note. |
-| **Revival Advisor** | Ranks Continue · Restart · Change the idea · Repurpose · Archive, and shows the reasons for and against each one. |
-| **Decide** | Revive with three next steps, or archive with an epitaph of lessons learned. Overriding the advisor is allowed and logged. |
+| **Revival Advisor** | Ranks Continue · Restart · Change the idea · Repurpose · Archive as drop zones, each showing its reasons for and against. Drag the project onto one to decide. |
+| **Decide** | Revive with three next steps, or archive with an epitaph of lessons learned (both editable in place). Overriding the advisor is allowed and logged. |
 | **Project Timeline** | Started → milestones → abandoned → revisited → decided, plus your own entries. |
 | **Haunt Me Later** | Set a revisit reminder. Due projects switch to *Haunting* and show on the archive. |
 | **Graveyard Insights** | Why your projects die, how far they get, what you decide, which stacks pile up, plain-language findings and an epitaph wall. |
@@ -34,16 +62,19 @@ decision about what happens next.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/bury.png" alt="Bury flow, step 2: The Autopsy" /><br /><sub>Bury: a 3-step guided form</sub></td>
-    <td width="50%"><img src="docs/screenshots/advisor.png" alt="Revival Advisor with reasons for each path" /><br /><sub>Revival Advisor: every point is explained</sub></td>
+    <td width="50%"><img src="docs/screenshots/advisor.png" alt="Revival Advisor: drag the project onto a ranked path zone" /><br /><sub>Revival Advisor: drag the project onto a path; every point is explained</sub></td>
+    <td width="50%"><img src="docs/screenshots/actions.png" alt="Project action canvas with haunt, export and exhume zones" /><br /><sub>Project actions: haunt, export and exhume are drop zones</sub></td>
   </tr>
   <tr>
+    <td><img src="docs/screenshots/bury.png" alt="Bury flow: drag the tombstone into the grave" /><br /><sub>Bury: drag the live tombstone into the grave</sub></td>
     <td><img src="docs/screenshots/insights.png" alt="Graveyard insights" /><br /><sub>Insights: patterns across the whole graveyard</sub></td>
-    <td><img src="docs/screenshots/rules.png" alt="How advice works page listing every rule" /><br /><sub>How advice works: the rules, straight from config</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/light.png" alt="Light mode" /><br /><sub>Light mode</sub></td>
-    <td align="center"><img src="docs/screenshots/mobile.png" alt="Mobile view of the advisor" width="220" /><br /><sub>Responsive down to phones</sub></td>
+    <td><img src="docs/screenshots/rules.png" alt="How advice works page listing every rule" /><br /><sub>How advice works: the rules, straight from config</sub></td>
+    <td><img src="docs/screenshots/light.png" alt="Light mode archive with the action dock" /><br /><sub>Light mode, with the archive's action dock</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><img src="docs/screenshots/mobile.png" alt="Mobile view of the advisor" width="220" /><br /><sub>Touch drag and drop on phones</sub></td>
   </tr>
 </table>
 
@@ -69,12 +100,13 @@ See [`docs/CONFIG.md`](docs/CONFIG.md) for step-by-step recipes.
 
 ## Tech
 
-React + Vite + TypeScript · Tailwind CSS v4 · Zustand (persisted to localStorage) · React Router · Framer Motion ·
+React + Vite + TypeScript · Tailwind CSS v4 · dnd-kit (drag and drop) · Zustand (persisted to localStorage) · React Router · Framer Motion ·
 GitHub REST API (public, no auth) · Vitest · Vercel. There is no backend: everything stays in the browser, with
 JSON export/import for backups.
 
 ```
 src/
+  canvas/     DataCard, ActionZone and the drag-and-drop provider
   config/     causes, statuses, paths and advisor rules
   engine/     advisor.ts: pure scoring, plus tests
   store/      Zustand stores (projects, toasts)
@@ -83,7 +115,7 @@ src/
   pages/      Archive, Bury, Project, Insights, Salvage Yard, How advice works
 ```
 
-Accessibility: keyboard-navigable (`/` search, `b` bury), focus-trapped dialogs, labelled controls, respects *reduce motion*,
+Accessibility: keyboard drag and drop with screen-reader announcements, shortcuts (`/` search, `b` bury), labelled controls, respects *reduce motion*,
 light/dark themes, and zero axe-core violations on every page in both themes (WCAG AA contrast).
 
 ## Run it

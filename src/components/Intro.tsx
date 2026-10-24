@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom'
 import { useGraveyard } from '../store/useGraveyard'
 
 const steps = [
-  { emoji: '🪦', title: 'Bury it', text: 'Record what it was, how far it got and what’s left. Or import it from GitHub.' },
+  { emoji: '🪦', title: 'Bury it', text: 'Record what it was and how far it got, then drag its tombstone into the grave.' },
   { emoji: '🔍', title: 'Autopsy', text: 'Say honestly why it stopped, and how you feel about it today.' },
-  { emoji: '⚡', title: 'Decide its fate', text: 'The Revival Advisor ranks five paths and explains every point. You make the call.' },
+  { emoji: '⚡', title: 'Decide its fate', text: 'The Revival Advisor ranks five paths and explains every point. Drag the project onto one.' },
 ]
 
 export function Intro() {
